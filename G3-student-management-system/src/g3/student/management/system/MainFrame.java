@@ -8,7 +8,7 @@ package g3.student.management.system;
  *
  * @author Glenn
  */
-public class G3StudentManagementSystem {
+public class MainFrame {
 
     /**
      * @param args the command line arguments
