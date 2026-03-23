@@ -10,4 +10,8 @@ package g3.student.management.system;
  */
 public class Attendance {
     
+    Attendance(){
+        
+    }
+    
 }
