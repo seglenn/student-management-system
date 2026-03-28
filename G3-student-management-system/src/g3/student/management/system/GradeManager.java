@@ -1,13 +1,67 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package g3.student.management.system;
+import java.util.*;
 
-/**
- *
- * @author Glenn
- */
-public class GradeManager {
-    
+class Grade {
+    private int studentId;
+    private String subject;
+    private double grade;
+
+    public Grade(int studentId, String subject, double grade) {
+        this.studentId = studentId;
+        this.subject = subject;
+        this.grade = grade;
+    }
+
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public double getGrade() {
+        return grade;
+    }
+
+    public void setGrade(double grade) {
+        this.grade = grade;
+    }
+}
+
+class GradeManager {
+    private List<Grade> grades;
+
+    public GradeManager() {
+        this.grades = new ArrayList<>();
+    }
+
+    public void addGrade(Grade grade) {
+        grades.add(grade);
+    }
+
+    public List<Grade> getAllGrades() {
+        return grades;
+    }
+
+    public List<Grade> getGradesByStudent(int studentId) {
+        List<Grade> studentGrades = new ArrayList<>();
+        for (Grade grade : grades) {
+            if (grade.getStudentId() == studentId) {
+                studentGrades.add(grade);
+            }
+        }
+        return studentGrades;
+    }
+
+    public void updateGrade(int studentId, double newGrade) {
+        for (Grade grade : grades) {
+            if (grade.getStudentId() == studentId) {
+                grade.setGrade(newGrade);
+            }
+        }
+    }
+
+    public void deleteGrade(int studentId) {
+        grades.removeIf(grade -> grade.getStudentId() == studentId);
+    }
 }
