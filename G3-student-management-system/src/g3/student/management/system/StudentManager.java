@@ -14,11 +14,11 @@ public class StudentManager {
         return students;
     }
     public void deleteStudent(int studentId) {
-        students.removeIf(s -> s.getId() == studentId);
+        students.removeIf(s -> s.getStudentId() == studentId);
     }
     public Student findStudentById(int studentId) {
         for (Student s : students) {
-            if (s.getId() == studentId) {
+            if (s.getStudentId() == studentId) {
                 return s;
             }
         }
