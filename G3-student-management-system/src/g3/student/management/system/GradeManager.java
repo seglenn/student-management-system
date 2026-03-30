@@ -1,34 +1,4 @@
-import java.util.*;
-
-class Grade {
-    private int studentId;
-    private String subject;
-    private double grade;
-
-    public Grade(int studentId, String subject, double grade) {
-        this.studentId = studentId;
-        this.subject = subject;
-        this.grade = grade;
-    }
-
-    public int getStudentId() {
-        return studentId;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public double getGrade() {
-        return grade;
-    }
-
-    public void setGrade(double grade) {
-        this.grade = grade;
-    }
-}
-
-class GradeManager {
+public class GradeManager {
     private List<Grade> grades;
 
     public GradeManager() {
@@ -46,22 +16,34 @@ class GradeManager {
     public List<Grade> getGradesByStudent(int studentId) {
         List<Grade> studentGrades = new ArrayList<>();
         for (Grade grade : grades) {
-            if (grade.getStudentId() == studentId) {
+            if (grade.studentID() == studentId) {
                 studentGrades.add(grade);
             }
         }
         return studentGrades;
     }
+}
 
-    public void updateGrade(int studentId, double newGrade) {
-        for (Grade grade : grades) {
-            if (grade.getStudentId() == studentId) {
-                grade.setGrade(newGrade);
-            }
-        }
+class Grade {
+    private int studentId;
+    private String subject;
+    private double grade;
+
+    public Grade(int studentId, String subject, double grade) {
+        this.studentId = studentId;
+        this.subject = subject;
+        this.grade = grade;
     }
 
-    public void deleteGrade(int studentId) {
-        grades.removeIf(grade -> grade.getStudentId() == studentId);
+    public int studentID() {
+        return studentId;
+    }
+
+    public String Subject() {
+        return subject;
+    }
+
+    public double Grade() {
+        return grade;
     }
 }
