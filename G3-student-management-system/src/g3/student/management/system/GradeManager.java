@@ -2,10 +2,12 @@ import java.util.*;
 
 class Grade {
     private int studentId;
+    private String subject;
     private double grade;
 
-    public Grade(int studentId, double grade) {
+    public Grade(int studentId, String subject, double grade) {
         this.studentId = studentId;
+        this.subject = subject;
         this.grade = grade;
     }
 
@@ -13,8 +15,16 @@ class Grade {
         return studentId;
     }
 
+    public String getSubject() {
+        return subject;
+    }
+
     public double getGrade() {
         return grade;
+    }
+
+    public void setGrade(double grade) {
+        this.grade = grade;
     }
 }
 
@@ -41,5 +51,17 @@ class GradeManager {
             }
         }
         return studentGrades;
+    }
+
+    public void updateGrade(int studentId, double newGrade) {
+        for (Grade grade : grades) {
+            if (grade.getStudentId() == studentId) {
+                grade.setGrade(newGrade);
+            }
+        }
+    }
+
+    public void deleteGrade(int studentId) {
+        grades.removeIf(grade -> grade.getStudentId() == studentId);
     }
 }
