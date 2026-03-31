@@ -16,7 +16,7 @@ public class GradeManager {
     public List<Grade> getGradesByStudent(int studentId) {
         List<Grade> studentGrades = new ArrayList<>();
         for (Grade grade : grades) {
-            if (grade.studentID() == studentId) {
+            if (grade.getStudentId() == studentId) {
                 studentGrades.add(grade);
             }
         }
@@ -27,23 +27,23 @@ public class GradeManager {
 class Grade {
     private int studentId;
     private String subject;
-    private double grade;
+    private double gradeValue;
 
-    public Grade(int studentId, String subject, double grade) {
+    public Grade(int studentId, String subject, double gradeValue) {
         this.studentId = studentId;
         this.subject = subject;
-        this.grade = grade;
+        this.gradeValue = gradeValue;
     }
 
-    public int studentID() {
+    public int getStudentId() {
         return studentId;
     }
 
-    public String Subject() {
+    public String getSubject() {
         return subject;
     }
 
-    public double Grade() {
-        return grade;
+    public double getGradeValue() {
+        return gradeValue;
     }
 }
