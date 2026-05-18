@@ -17,14 +17,12 @@ public class DashboardPanel extends JPanel {
     
     private JLabel lblTitle, lblSubtxt, imgDisplay; 
     private ImageIcon imgDashOne;
-    private TodoPanel todoPanel; // Idinagdag na variable para sa To-Do List
+    private TodoPanel todoPanel; 
     
     public DashboardPanel() {
         
         setLayout(null);
-        setBackground(new Color(244, 245, 247)); // Bagay na background para lumitaw ang white cards
-        
-        // ContentPanel reference sizes: bounds(350, 0, 1570, 1084)
+        setBackground(new Color(244, 245, 247)); 
         
         lblTitle = new JLabel("Dashboard");
         lblTitle.setBounds(45, 87, 230, 47);
@@ -38,12 +36,9 @@ public class DashboardPanel extends JPanel {
         lblSubtxt.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         add(lblSubtxt);
         
-        // --- DITO INILAGAY ANG TO-DO LIST (MY TASKS) PANEL ---
         todoPanel = new TodoPanel();
-        // In-adjust ang bounds para saktong pumwesto sa kaliwang bahagi, katapat ng image sa kanan
         todoPanel.setBounds(45, 410, 560, 490); 
         add(todoPanel);
-        // -----------------------------------------------------
         
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
         
@@ -52,7 +47,6 @@ public class DashboardPanel extends JPanel {
         add(imgDisplay);
     }
 
-    // Inner Class para sa Todo Panel para malinis ang pagka-arkitekto ng code mo
     private class TodoPanel extends JPanel {
         private JPanel taskListContainer;
         private JTextField taskInputField;
@@ -67,7 +61,6 @@ public class DashboardPanel extends JPanel {
             this.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 230), 1));
             this.setLayout(new BorderLayout(10, 10));
 
-            // 1. Header (Icon at Title)
             JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
             headerPanel.setBackground(PANEL_BG);
             
@@ -77,7 +70,6 @@ public class DashboardPanel extends JPanel {
             headerPanel.add(titleLabel);
             this.add(headerPanel, BorderLayout.NORTH);
 
-            // 2. Middle (Scrollable Task List)
             taskListContainer = new JPanel();
             taskListContainer.setBackground(PANEL_BG);
             taskListContainer.setLayout(new GridBagLayout()); 
@@ -87,7 +79,6 @@ public class DashboardPanel extends JPanel {
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
             this.add(scrollPane, BorderLayout.CENTER);
 
-            // 3. Bottom (Input text field at Add [ + ] button)
             JPanel inputPanel = new JPanel(new BorderLayout(8, 0));
             inputPanel.setBackground(PANEL_BG);
             inputPanel.setBorder(new EmptyBorder(0, 15, 15, 15));
@@ -139,7 +130,6 @@ public class DashboardPanel extends JPanel {
             inputPanel.add(addButton, BorderLayout.EAST);
             this.add(inputPanel, BorderLayout.SOUTH);
 
-            // Default Tasks base sa Canva Design
             addTaskRow("Create a PPT presentation for History subject");
             addTaskRow("Add grades to students in English class");
         }
