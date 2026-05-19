@@ -61,6 +61,10 @@ public class DashboardPanel extends JPanel {
             this.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 230), 1));
             this.setLayout(new BorderLayout(10, 10));
 
+            JPanel topContainerPanel = new JPanel();
+            topContainerPanel.setLayout(new BoxLayout(topContainerPanel, BoxLayout.Y_AXIS));
+            topContainerPanel.setBackground(PANEL_BG);
+
             JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
             headerPanel.setBackground(PANEL_BG);
             
@@ -68,16 +72,7 @@ public class DashboardPanel extends JPanel {
             titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
             titleLabel.setForeground(TEXT_GRAY);
             headerPanel.add(titleLabel);
-            this.add(headerPanel, BorderLayout.NORTH);
-
-            taskListContainer = new JPanel();
-            taskListContainer.setBackground(PANEL_BG);
-            taskListContainer.setLayout(new GridBagLayout()); 
-            
-            JScrollPane scrollPane = new JScrollPane(taskListContainer);
-            scrollPane.setBorder(null);
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            this.add(scrollPane, BorderLayout.CENTER);
+            topContainerPanel.add(headerPanel);
 
             JPanel inputPanel = new JPanel(new BorderLayout(8, 0));
             inputPanel.setBackground(PANEL_BG);
@@ -128,7 +123,18 @@ public class DashboardPanel extends JPanel {
 
             inputPanel.add(taskInputField, BorderLayout.CENTER);
             inputPanel.add(addButton, BorderLayout.EAST);
-            this.add(inputPanel, BorderLayout.SOUTH);
+            topContainerPanel.add(inputPanel);
+
+            this.add(topContainerPanel, BorderLayout.NORTH);
+
+            taskListContainer = new JPanel();
+            taskListContainer.setBackground(PANEL_BG);
+            taskListContainer.setLayout(new GridBagLayout()); 
+            
+            JScrollPane scrollPane = new JScrollPane(taskListContainer);
+            scrollPane.setBorder(null);
+            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+            this.add(scrollPane, BorderLayout.CENTER);
 
             addTaskRow("Create a PPT presentation for History subject");
             addTaskRow("Add grades to students in English class");
@@ -168,9 +174,17 @@ public class DashboardPanel extends JPanel {
             rowPanel.add(checkBox, BorderLayout.CENTER);
             rowPanel.add(deleteButton, BorderLayout.EAST);
 
+            java.awt.Component[] components = taskListContainer.getComponents();
+            GridBagLayout layout = (GridBagLayout) taskListContainer.getLayout();
+            for (java.awt.Component comp : components) {
+                GridBagConstraints gbcExisting = layout.getConstraints(comp);
+                gbcExisting.gridy++; 
+                layout.setConstraints(comp, gbcExisting);
+            }
+
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridx = 0;
-            gbc.gridy = taskListContainer.getComponentCount();
+            gbc.gridy = 0; 
             gbc.weightx = 1.0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.anchor = GridBagConstraints.NORTHWEST;
