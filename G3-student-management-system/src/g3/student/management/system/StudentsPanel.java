@@ -38,7 +38,7 @@ public class StudentsPanel extends JPanel{
         btnAddStud.addActionListener(new ActionListener(){
             
             private JLabel lblAddStud, lblSubtitle, lblFirstName, lblLastName, lblProgram, lblYear, lblEmail;
-            private JTextField tfFName, tfLName, tfYear, tfEmail; 
+            private JTextField tfFName, tfLName, tfEmail; 
             private JComboBox cmbProg, cmbYear;
             private JButton btnAdd;
             
