@@ -21,6 +21,7 @@ public class DashboardPanel extends JPanel {
     private JLabel lblTitle, lblSubtxt, imgDisplay; 
     private ImageIcon imgDashOne;
     private TodoPanel todoPanel; 
+    private JLabel lblProgressPercent; 
     
     public DashboardPanel() {
         
@@ -38,6 +39,12 @@ public class DashboardPanel extends JPanel {
         lblSubtxt.setForeground(Color.decode("#737373"));
         lblSubtxt.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         add(lblSubtxt);
+
+        lblProgressPercent = new JLabel("50%"); 
+        lblProgressPercent.setBounds(745, 240, 150, 50); 
+        lblProgressPercent.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        lblProgressPercent.setForeground(new Color(0, 150, 136)); 
+        add(lblProgressPercent);
         
         todoPanel = new TodoPanel();
         todoPanel.setBounds(45, 410, 560, 490); 
@@ -48,6 +55,33 @@ public class DashboardPanel extends JPanel {
         imgDisplay = new JLabel(imgDashOne);
         imgDisplay.setBounds(1153, 589, 417, 491);
         add(imgDisplay);
+
+        updateProgress(); 
+    }
+
+    public void updateProgress() {
+        if (todoPanel == null || todoPanel.taskListContainer == null) return;
+        
+        int totalTasks = 0;
+        int completedTasks = 0;
+        
+        java.awt.Component[] components = todoPanel.taskListContainer.getComponents();
+        for (java.awt.Component comp : components) {
+            if (comp instanceof JPanel) {
+                JPanel row = (JPanel) comp;
+                for (java.awt.Component child : row.getComponents()) {
+                    if (child instanceof JCheckBox) {
+                        totalTasks++;
+                        if (((JCheckBox) child).isSelected()) {
+                            completedTasks++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        int percentage = (totalTasks == 0) ? 0 : (int) (((double) completedTasks / totalTasks) * 100);
+        lblProgressPercent.setText(percentage + "%");
     }
 
     private class TodoPanel extends JPanel {
@@ -62,24 +96,13 @@ public class DashboardPanel extends JPanel {
         public TodoPanel() {
             this.setBackground(PANEL_BG);
             this.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 230), 1));
-            this.setLayout(new BorderLayout(10, 10));
+            this.setLayout(null);
 
-            JPanel topContainerPanel = new JPanel();
-            topContainerPanel.setLayout(new BoxLayout(topContainerPanel, BoxLayout.Y_AXIS));
-            topContainerPanel.setBackground(PANEL_BG);
-
-            JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
-            headerPanel.setBackground(PANEL_BG);
-            
             JLabel titleLabel = new JLabel("MY TASKS:");
             titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
             titleLabel.setForeground(TEXT_GRAY);
-            headerPanel.add(titleLabel);
-            topContainerPanel.add(headerPanel);
-
-            JPanel inputPanel = new JPanel(new BorderLayout(8, 0));
-            inputPanel.setBackground(PANEL_BG);
-            inputPanel.setBorder(new EmptyBorder(0, 15, 15, 15));
+            titleLabel.setBounds(15, 15, 200, 25);
+            this.add(titleLabel);
 
             taskInputField = new JTextField();
             taskInputField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -87,6 +110,7 @@ public class DashboardPanel extends JPanel {
                     BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
                     BorderFactory.createEmptyBorder(8, 8, 8, 8)
             ));
+            taskInputField.setBounds(15, 50, 440, 40);
             
             taskInputField.setText("Add new task here...");
             taskInputField.setForeground(Color.LIGHT_GRAY);
@@ -104,13 +128,14 @@ public class DashboardPanel extends JPanel {
                     }
                 }
             });
+            this.add(taskInputField);
 
             addButton = new JButton("+");
             addButton.setFont(new Font("Segoe UI", Font.PLAIN, 22));
             addButton.setBackground(BLUE_THEME);
             addButton.setForeground(Color.WHITE);
             addButton.setFocusPainted(false);
-            addButton.setBorder(BorderFactory.createEmptyBorder(2, 18, 2, 18));
+            addButton.setBounds(465, 50, 80, 40);
 
             addButton.addActionListener(new ActionListener() {
                 @Override
@@ -123,21 +148,17 @@ public class DashboardPanel extends JPanel {
                     }
                 }
             });
-
-            inputPanel.add(taskInputField, BorderLayout.CENTER);
-            inputPanel.add(addButton, BorderLayout.EAST);
-            topContainerPanel.add(inputPanel);
-
-            this.add(topContainerPanel, BorderLayout.NORTH);
+            this.add(addButton);
 
             taskListContainer = new JPanel();
             taskListContainer.setBackground(PANEL_BG);
-            taskListContainer.setLayout(new GridBagLayout()); 
+            taskListContainer.setLayout(null); 
             
             JScrollPane scrollPane = new JScrollPane(taskListContainer);
             scrollPane.setBorder(null);
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            this.add(scrollPane, BorderLayout.CENTER);
+            scrollPane.setBounds(15, 105, 530, 370);
+            this.add(scrollPane);
 
             addTaskRow("Add grades to students in English class");
             addTaskRow("Create a PPT presentation for History subject");
@@ -160,15 +181,17 @@ public class DashboardPanel extends JPanel {
         }
 
         private void addTaskRow(String taskText) {
-            JPanel rowPanel = new JPanel(new BorderLayout(5, 0));
+            JPanel rowPanel = new JPanel();
+            rowPanel.setLayout(null);
             rowPanel.setBackground(PANEL_BG);
-            rowPanel.setBorder(new EmptyBorder(6, 35, 6, 15));
+            rowPanel.setSize(510, 40);
 
             JCheckBox checkBox = new JCheckBox(taskText);
             checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 15));
             checkBox.setBackground(PANEL_BG);
             checkBox.setFocusPainted(false);
             checkBox.setIconTextGap(10);
+            checkBox.setBounds(20, 0, 440, 40);
 
             checkBox.addActionListener(e -> {
                 if (checkBox.isSelected()) {
@@ -184,6 +207,7 @@ public class DashboardPanel extends JPanel {
                     attributes.put(TextAttribute.STRIKETHROUGH, false);
                     checkBox.setFont(new Font(attributes));
                 }
+                updateProgress(); 
             });
 
             JButton deleteButton = new JButton("✕");
@@ -193,32 +217,40 @@ public class DashboardPanel extends JPanel {
             deleteButton.setBorderPainted(false);
             deleteButton.setFocusPainted(false);
             deleteButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            deleteButton.setBounds(460, 0, 50, 40);
 
             deleteButton.addActionListener(e -> {
                 taskListContainer.remove(rowPanel);
+                rearrangeTasks();
                 revalidateLayout();
+                updateProgress(); 
             });
 
-            rowPanel.add(checkBox, BorderLayout.CENTER);
-            rowPanel.add(deleteButton, BorderLayout.EAST);
+            rowPanel.add(checkBox);
+            rowPanel.add(deleteButton);
 
             java.awt.Component[] components = taskListContainer.getComponents();
-            GridBagLayout layout = (GridBagLayout) taskListContainer.getLayout();
             for (java.awt.Component comp : components) {
-                GridBagConstraints gbcExisting = layout.getConstraints(comp);
-                gbcExisting.gridy++; 
-                layout.setConstraints(comp, gbcExisting);
+                comp.setLocation(comp.getX(), comp.getY() + 40);
             }
 
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = 0;
-            gbc.gridy = 0; 
-            gbc.weightx = 1.0;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.anchor = GridBagConstraints.NORTHWEST;
-
-            taskListContainer.add(rowPanel, gbc);
+            rowPanel.setLocation(0, 0);
+            taskListContainer.add(rowPanel);
+            
+            taskListContainer.setPreferredSize(new Dimension(510, (components.length + 1) * 40));
+            
             revalidateLayout();
+            updateProgress(); 
+        }
+
+        private void rearrangeTasks() {
+            java.awt.Component[] components = taskListContainer.getComponents();
+            int y = 0;
+            for (int i = components.length - 1; i >= 0; i--) {
+                components[i].setLocation(0, y);
+                y += 40;
+            }
+            taskListContainer.setPreferredSize(new Dimension(510, components.length * 40));
         }
 
         private void revalidateLayout() {
