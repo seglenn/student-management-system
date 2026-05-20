@@ -104,6 +104,7 @@ public class HomePage extends JFrame{
         btnStart.setBackground (Color.decode("#1f88e4"));
         add(btnStart);
         
+        
         btnStart.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e){

@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 public class AttendancePanel extends JPanel {
     
@@ -12,6 +14,9 @@ public class AttendancePanel extends JPanel {
     private JLabel lblTitle, lblSubtxt, imgDisplay; 
     private JButton btnAddAtt;
     private ImageIcon imgDashOne;
+    private JTable attTable;
+    private DefaultTableModel tableModel; 
+    private JScrollPane scrollPane;
     
     AttendancePanel(){
         
@@ -37,6 +42,28 @@ public class AttendancePanel extends JPanel {
         btnAddAtt.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnAddAtt.setForeground(Color.WHITE);
         add(btnAddAtt);
+        
+        String[] columns = {"Date", "Student Name", "Status", "Comment", "Course/Subject",};
+        tableModel = new DefaultTableModel(columns, 0);
+        attTable = new JTable(tableModel);
+        
+        attTable.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        attTable.setRowHeight(40);
+        attTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        attTable.getTableHeader().setBackground(Color.decode("#1f87e2"));
+        attTable.getTableHeader().setForeground(Color.WHITE);
+        attTable.setSelectionBackground(Color.decode("#e3f2fd"));
+        attTable.setGridColor(Color.decode("#e0e0e0"));
+        
+        JTableHeader header = attTable.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        header.setBackground(Color.decode("#1f87e2"));
+        header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 50));
+        
+        scrollPane = new JScrollPane(attTable);
+        scrollPane.setBounds(45, 200, 1450, 650);
+        add(scrollPane); 
         
         btnAddAtt.addActionListener (new ActionListener(){
             
@@ -101,7 +128,7 @@ public class AttendancePanel extends JPanel {
                 lblComm = new JLabel("Comment (optional)");
                 lblComm.setForeground(Color.BLACK);
                 lblComm.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblComm.setBounds(43, 231, 201, 22);
+                lblComm.setBounds(43, 329, 201, 22);
                 frmAddStud.add(lblComm);
                 
                     tfComm = new JTextField();

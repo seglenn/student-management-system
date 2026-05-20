@@ -6,10 +6,11 @@ import java.awt.event.*;
 
 public class MainPage extends JFrame {
     
-    private JLabel lblTitleOne, lblTitleTwo; 
+    private JLabel lblTitleOne, lblTitleTwo, lblLogoName, lblLine; 
     private JButton btnDashboard, btnStuds, btnGrades, btnAttendance, selectedButton;
     private JPanel sideBarPanel, contentPanel;
     private CardLayout cardLayout;
+    private ImageIcon logoAndName, Line;
     
     MainPage() {
         
@@ -18,17 +19,19 @@ public class MainPage extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Student Management System - Group 3");
         
-        lblTitleOne = new JLabel("Student");
-        lblTitleOne.setBounds(100, 50, 73, 31);
-        lblTitleOne.setForeground(Color.WHITE);
-        lblTitleOne.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        add(lblTitleOne);
+//        lblTitleOne = new JLabel("Student");
+//        lblTitleOne.setBounds(100, 50, 73, 31);
+//        lblTitleOne.setForeground(Color.WHITE);
+//        lblTitleOne.setFont(new Font("Segoe UI", Font.BOLD, 16));
+//        add(lblTitleOne);
+//        
+//        lblTitleTwo = new JLabel("Management System");
+//        lblTitleTwo.setBounds(100, 65, 179, 31);
+//        lblTitleTwo.setForeground(Color.WHITE);
+//        lblTitleTwo.setFont(new Font("Segoe UI", Font.BOLD, 16));
+//        add(lblTitleTwo);
+
         
-        lblTitleTwo = new JLabel("Management System");
-        lblTitleTwo.setBounds(100, 65, 179, 31);
-        lblTitleTwo.setForeground(Color.WHITE);
-        lblTitleTwo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        add(lblTitleTwo);
         
         sideBarPanel = new JPanel();
         sideBarPanel.setBounds(0, 0, 353, 1080);
@@ -36,11 +39,23 @@ public class MainPage extends JFrame {
         sideBarPanel.setLayout(null);
         add(sideBarPanel);
         
+        logoAndName = new ImageIcon ("images/logo-and-name.png");
+        Line = new ImageIcon ("images/line.png");
+        
+        lblLogoName = new JLabel (logoAndName);
+        lblLogoName.setBounds(50, 37, 277, 55);
+        sideBarPanel.add(lblLogoName);
+        
+        lblLine = new JLabel (Line); 
+        lblLine.setBounds(42, 57, 277, 112);
+        sideBarPanel.add(lblLine); 
+        
+        
         btnDashboard = new JButton("Dashboard");
         btnDashboard.setBounds(41, 142, 277, 60);
         btnDashboard.setForeground(Color.decode("#b4b4b4"));
         btnDashboard.setBackground(Color.decode("#202c3c"));
-        btnDashboard.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        btnDashboard.setFont(new Font("Segoe UI", Font.PLAIN, 25));
         btnDashboard.setFocusPainted(false);
         btnDashboard.setBorderPainted(false);
         sideBarPanel.add(btnDashboard);
@@ -49,7 +64,7 @@ public class MainPage extends JFrame {
         btnStuds.setBounds(41, 212, 277, 60);
         btnStuds.setForeground(Color.decode("#b4b4b4"));
         btnStuds.setBackground(Color.decode("#202c3c"));
-        btnStuds.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        btnStuds.setFont(new Font("Segoe UI", Font.PLAIN, 25));
         btnStuds.setFocusPainted(false);
         btnStuds.setBorderPainted(false);
         sideBarPanel.add(btnStuds);
@@ -58,7 +73,7 @@ public class MainPage extends JFrame {
         btnGrades.setBounds(41, 282, 277, 60);
         btnGrades.setForeground(Color.decode("#b4b4b4"));
         btnGrades.setBackground(Color.decode("#202c3c"));
-        btnGrades.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        btnGrades.setFont(new Font("Segoe UI", Font.PLAIN, 25));
         btnGrades.setFocusPainted(false);
         btnGrades.setBorderPainted(false);
         sideBarPanel.add(btnGrades);
@@ -67,7 +82,7 @@ public class MainPage extends JFrame {
         btnAttendance.setBounds(41, 352, 277, 60);
         btnAttendance.setForeground(Color.decode("#b4b4b4"));
         btnAttendance.setBackground(Color.decode("#202c3c"));
-        btnAttendance.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        btnAttendance.setFont(new Font("Segoe UI", Font.PLAIN, 25));
         btnAttendance.setFocusPainted(false);
         btnAttendance.setBorderPainted(false);
         sideBarPanel.add(btnAttendance);
@@ -85,6 +100,7 @@ public class MainPage extends JFrame {
                     if (button != selectedButton) {
                         button.setBackground(Color.decode("#1f87e2"));
                         button.setForeground(Color.WHITE);
+                        button.setFont(new Font("Segoe UI", Font.BOLD, 25));
                     }
                 }
                 
@@ -93,6 +109,7 @@ public class MainPage extends JFrame {
                     if (button != selectedButton) {
                         button.setBackground(Color.decode("#202c3c"));
                         button.setForeground(Color.decode("#b4b4b4"));
+                        button.setFont(new Font("Segoe UI", Font.PLAIN, 25));
                     }
                 }
             });
