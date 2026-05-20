@@ -1,6 +1,7 @@
 package g3.student.management.system;
 
 import javax.swing.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,6 +11,9 @@ public class GradesPanel extends JPanel {
     private JLabel lblTitle, lblSubtxt, imgDisplay; 
     private JButton btnAddGrade;
     private ImageIcon imgDashOne;
+    private JTable gradeTable;
+    private DefaultTableModel tableModel; 
+    private JScrollPane scrollPane;
     
     GradesPanel(){
         setLayout(null);
@@ -34,6 +38,29 @@ public class GradesPanel extends JPanel {
         btnAddGrade.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnAddGrade.setForeground(Color.WHITE);
         add(btnAddGrade);
+        
+        String[] columns = {"Date", "Student Name", "Course/Subject", "Grade",  "Remarks",};
+        tableModel = new DefaultTableModel(columns, 0);
+        gradeTable = new JTable(tableModel);
+        
+        // Style the table
+        gradeTable.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        gradeTable.setRowHeight(40);
+        gradeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        gradeTable.getTableHeader().setBackground(Color.decode("#1f87e2"));
+        gradeTable.getTableHeader().setForeground(Color.WHITE);
+        gradeTable.setSelectionBackground(Color.decode("#e3f2fd"));
+        gradeTable.setGridColor(Color.decode("#e0e0e0"));
+        
+        JTableHeader header = gradeTable.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        header.setBackground(Color.decode("#1f87e2"));
+        header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 50));
+        
+        scrollPane = new JScrollPane(gradeTable);
+        scrollPane.setBounds(45, 200, 1450, 650);
+        add(scrollPane); 
         
         btnAddGrade.addActionListener(new ActionListener(){
             
@@ -66,8 +93,8 @@ public class GradesPanel extends JPanel {
                 
                 lblName = new JLabel ("Student Name");
                 lblName.setForeground(Color.BLACK);
-                lblName.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblName.setBounds(38, 124, 102, 22);
+                lblName.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblName.setBounds(38, 124, 152, 22);
                 frmAddStud.add(lblName);
                 
                     tfFName = new JTextField();
@@ -77,20 +104,19 @@ public class GradesPanel extends JPanel {
                 
                 lblSubj = new JLabel ("Course/Subject");
                 lblSubj.setForeground(Color.BLACK);
-                lblSubj.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                lblSubj.setFont(new Font("Segoe UI", Font.BOLD, 20));
                 lblSubj.setBounds(43, 231, 157, 22);
                 frmAddStud.add(lblSubj);
                 
                     String [] optProg = {"English", "Math", "Programing"};
                     cmbSubj = new JComboBox<>(optProg);
                     cmbSubj.setBounds(35, 259, 842, 53);
-                    frmAddStud.add(cmbSubj);
-                
-   
+                    cmbSubj.setFont (new Font("Segoe UI", Font.BOLD, 20));
+                    frmAddStud.add(cmbSubj); 
                     
                 lblGrade = new JLabel ("Grade");
                 lblGrade.setForeground(Color.BLACK);
-                lblGrade.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                lblGrade.setFont(new Font("Segoe UI", Font.BOLD, 20));
                 lblGrade.setBounds(38, 315, 102, 22);
                 frmAddStud.add(lblGrade);
                 
@@ -122,6 +148,8 @@ public class GradesPanel extends JPanel {
             }
         });
         
+        
+        
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
         
         imgDisplay = new JLabel(imgDashOne);
@@ -129,5 +157,6 @@ public class GradesPanel extends JPanel {
         add(imgDisplay);
   
     }
+    
     
 }

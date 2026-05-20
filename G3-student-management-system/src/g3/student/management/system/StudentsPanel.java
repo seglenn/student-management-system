@@ -3,12 +3,17 @@ package g3.student.management.system;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 public class StudentsPanel extends JPanel{
     
     JLabel lblTitle, lblSubtxt, imgDisplay;
     JButton btnAddStud;
     ImageIcon imgDashOne;
+    private JTable studTable;
+    private DefaultTableModel tableModel; 
+    private JScrollPane scrollPane;
     
     StudentsPanel(){
         
@@ -34,6 +39,29 @@ public class StudentsPanel extends JPanel{
         btnAddStud.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnAddStud.setForeground(Color.WHITE);
         add(btnAddStud);
+        
+        String[] columns = {"Name", "Email", "Program & Section", "Enrollment Date", "Status"};
+        tableModel = new DefaultTableModel(columns, 0);
+        studTable = new JTable(tableModel);
+        
+        // Style the table
+        studTable.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        studTable.setRowHeight(40);
+        studTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        studTable.getTableHeader().setBackground(Color.decode("#1f87e2"));
+        studTable.getTableHeader().setForeground(Color.WHITE);
+        studTable.setSelectionBackground(Color.decode("#e3f2fd"));
+        studTable.setGridColor(Color.decode("#e0e0e0"));
+        
+        JTableHeader header = studTable.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        header.setBackground(Color.decode("#1f87e2"));
+        header.setForeground(Color.WHITE);
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 50));
+        
+        scrollPane = new JScrollPane(studTable);
+        scrollPane.setBounds(45, 200, 1450, 650);
+        add(scrollPane); 
         
         btnAddStud.addActionListener(new ActionListener(){
             
