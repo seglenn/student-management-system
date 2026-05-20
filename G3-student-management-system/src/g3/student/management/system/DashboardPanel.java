@@ -10,8 +10,11 @@ import java.awt.GridBagConstraints;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.font.TextAttribute;
+import java.util.HashMap;
 
 public class DashboardPanel extends JPanel {
     
@@ -81,7 +84,7 @@ public class DashboardPanel extends JPanel {
             taskInputField = new JTextField();
             taskInputField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             taskInputField.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(210, 214, 219), 1),
+                    BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
                     BorderFactory.createEmptyBorder(8, 8, 8, 8)
             ));
             
@@ -103,11 +106,11 @@ public class DashboardPanel extends JPanel {
             });
 
             addButton = new JButton("+");
-            addButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            addButton.setFont(new Font("Segoe UI", Font.PLAIN, 22));
             addButton.setBackground(BLUE_THEME);
             addButton.setForeground(Color.WHITE);
             addButton.setFocusPainted(false);
-            addButton.setBorder(BorderFactory.createEmptyBorder(5, 18, 5, 18));
+            addButton.setBorder(BorderFactory.createEmptyBorder(2, 18, 2, 18));
 
             addButton.addActionListener(new ActionListener() {
                 @Override
@@ -136,25 +139,50 @@ public class DashboardPanel extends JPanel {
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
             this.add(scrollPane, BorderLayout.CENTER);
 
-            addTaskRow("Create a PPT presentation for History subject");
             addTaskRow("Add grades to students in English class");
+            addTaskRow("Create a PPT presentation for History subject");
+            
+            java.awt.Component[] comps = taskListContainer.getComponents();
+            if (comps.length > 0 && comps[1] instanceof JPanel) {
+                JPanel firstRow = (JPanel) comps[1];
+                for (java.awt.Component child : firstRow.getComponents()) {
+                    if (child instanceof JCheckBox) {
+                        JCheckBox cb = (JCheckBox) child;
+                        cb.setSelected(true);
+                        cb.setForeground(Color.LIGHT_GRAY);
+                        Font baseFont = cb.getFont();
+                        Map<TextAttribute, Object> attributes = new HashMap<>(baseFont.getAttributes());
+                        attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+                        cb.setFont(new Font(attributes));
+                    }
+                }
+            }
         }
 
         private void addTaskRow(String taskText) {
             JPanel rowPanel = new JPanel(new BorderLayout(5, 0));
             rowPanel.setBackground(PANEL_BG);
-            rowPanel.setBorder(new EmptyBorder(6, 15, 6, 15));
+            rowPanel.setBorder(new EmptyBorder(6, 35, 6, 15));
 
             JCheckBox checkBox = new JCheckBox(taskText);
-            checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 15));
             checkBox.setBackground(PANEL_BG);
             checkBox.setFocusPainted(false);
+            checkBox.setIconTextGap(10);
 
             checkBox.addActionListener(e -> {
                 if (checkBox.isSelected()) {
                     checkBox.setForeground(Color.LIGHT_GRAY);
+                    Font baseFont = checkBox.getFont();
+                    Map<TextAttribute, Object> attributes = new HashMap<>(baseFont.getAttributes());
+                    attributes.put(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON);
+                    checkBox.setFont(new Font(attributes));
                 } else {
                     checkBox.setForeground(Color.BLACK);
+                    Font baseFont = checkBox.getFont();
+                    Map<TextAttribute, Object> attributes = new HashMap<>(baseFont.getAttributes());
+                    attributes.put(TextAttribute.STRIKETHROUGH, false);
+                    checkBox.setFont(new Font(attributes));
                 }
             });
 
