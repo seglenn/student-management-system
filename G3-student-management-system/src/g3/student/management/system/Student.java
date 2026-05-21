@@ -1,13 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package g3.student.management.system;
-
-/**
- *
- * @author Glenn
- */
 public class Student {
-    
+
+    private int studentId;
+    private String studentName;
+    private String course;
+
+    public Student(int studentId, String studentName, String course) {
+        this.studentId = studentId;
+        this.studentName = studentName;
+        this.course = course;
+    }
+
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public String getCourse() {
+        return course;
+    }
 }
