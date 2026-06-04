@@ -94,63 +94,70 @@ public class StudentsPanel extends JPanel{
                 
                 lblFirstName = new JLabel ("First Name");
                 lblFirstName.setForeground(Color.BLACK);
-                lblFirstName.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblFirstName.setBounds(38, 124, 102, 22);
+                lblFirstName.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblFirstName.setBounds(32, 122, 122, 22);
                 frmAddStud.add(lblFirstName);
                 
                     tfFName = new JTextField();
                     tfFName.setBounds(31, 152, 353, 53);
+                    tfFName.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(tfFName);
                     
                 lblLastName = new JLabel ("Last Name");
                 lblLastName.setForeground(Color.BLACK);
-                lblLastName.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblLastName.setBounds(447, 124, 102, 22);
+                lblLastName.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblLastName.setBounds(441, 122, 122, 22);
                 frmAddStud.add(lblLastName);
                 
                     tfLName = new JTextField ();
                     tfLName.setBounds(440, 152, 434, 53);
+                    tfLName.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(tfLName);
                 
                 lblProgram = new JLabel ("Program");
                 lblProgram.setForeground(Color.BLACK);
-                lblProgram.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblProgram.setBounds(38, 219, 102, 22);
+                lblProgram.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblProgram.setBounds(32, 215, 122, 28);
                 frmAddStud.add(lblProgram);
                 
-                    String [] optProg = {"BSIT", "CPE", "PSYCH"};
+                    String [] optProg = {"BSIT", "CPE", "PSYCH", "DIT"};
                     cmbProg = new JComboBox<>(optProg);
                     cmbProg.setBounds(31, 247, 673, 53);
+                    cmbProg.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(cmbProg);
                 
                 lblYear = new JLabel ("Year");
                 lblYear.setForeground(Color.BLACK);
-                lblYear.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblYear.setBounds(728, 219, 102, 22);
+                lblYear.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblYear.setBounds(728, 215, 122, 22);
                 frmAddStud.add(lblYear);
                 
                     String [] optYear = {"1st Year", "2nd Year", "3rd Year", "4th Year"};
                     cmbYear = new JComboBox<>(optYear);
                     cmbYear.setBounds(720, 247, 153, 53);
+                    cmbYear.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(cmbYear);
                     
                 lblEmail = new JLabel ("Email");
                 lblEmail.setForeground(Color.BLACK);
-                lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                lblEmail.setBounds(38, 315, 102, 22);
+                lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                lblEmail.setBounds(32, 315, 122, 22);
                 frmAddStud.add(lblEmail);
                 
                     tfEmail = new JTextField ();
                     tfEmail.setBounds(31, 343, 843, 53);
+                    tfEmail.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(tfEmail);
                     
                 btnAdd = new JButton ("Add");
-                btnAdd.setBounds(684, 429, 190, 53);
+                btnAdd.setBounds(684, 419, 190, 53);
                 btnAdd.setForeground(Color.WHITE);
                 btnAdd.setBackground(Color.decode("#1f89e5"));
+                btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 25));
                 btnAdd.setFocusPainted(false);
                 btnAdd.setBorderPainted(false);
                 frmAddStud.add(btnAdd);
+                
                 
                     btnAdd.addActionListener (new ActionListener(){
                         
@@ -179,3 +186,8 @@ public class StudentsPanel extends JPanel{
     }
     
 }
+
+
+
+
+

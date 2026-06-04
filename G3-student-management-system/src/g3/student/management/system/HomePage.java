@@ -102,6 +102,8 @@ public class HomePage extends JFrame{
         btnStart.setFont(new Font("Segoe UI", Font.BOLD, 30));
         btnStart.setForeground(Color.WHITE);
         btnStart.setBackground (Color.decode("#1f88e4"));
+        btnStart.setFocusPainted(false);
+        btnStart.setBorderPainted(false);
         add(btnStart);
         
         
@@ -137,3 +139,5 @@ public class HomePage extends JFrame{
     }
     
 }
+
+

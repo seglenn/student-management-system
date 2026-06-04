@@ -65,7 +65,7 @@ public class GradesPanel extends JPanel {
         btnAddGrade.addActionListener(new ActionListener(){
             
             private JLabel lblAddStud, lblSubtitle, lblName, lblSubj, lblGrade;
-            private JTextField tfFName, tfGrade; 
+            private JTextField tfName, tfGrade; 
             private JComboBox cmbSubj;
             private JButton btnAdd;
             
@@ -76,7 +76,7 @@ public class GradesPanel extends JPanel {
                 frmAddStud.setSize(904, 525);
                 frmAddStud.setLayout(null);
                 frmAddStud.setLocationRelativeTo(null);
-                frmAddStud.setTitle("ADD NEW STUDENT");
+                frmAddStud.setTitle("ADD NEW GRADE");
                 frmAddStud.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 
                 lblAddStud = new JLabel("Add new grade");
@@ -94,40 +94,43 @@ public class GradesPanel extends JPanel {
                 lblName = new JLabel ("Student Name");
                 lblName.setForeground(Color.BLACK);
                 lblName.setFont(new Font("Segoe UI", Font.BOLD, 20));
-                lblName.setBounds(38, 124, 152, 22);
+                lblName.setBounds(32, 124, 152, 22);
                 frmAddStud.add(lblName);
                 
-                    tfFName = new JTextField();
-                    tfFName.setBounds(35, 164, 842, 53);
-                    frmAddStud.add(tfFName);
+                    tfName = new JTextField();
+                    tfName.setBounds(32, 155, 842, 53);
+                    tfName.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+                    frmAddStud.add(tfName);
                    
                 
                 lblSubj = new JLabel ("Course/Subject");
                 lblSubj.setForeground(Color.BLACK);
                 lblSubj.setFont(new Font("Segoe UI", Font.BOLD, 20));
-                lblSubj.setBounds(43, 231, 157, 22);
+                lblSubj.setBounds(32, 221, 157, 22);
                 frmAddStud.add(lblSubj);
                 
                     String [] optProg = {"English", "Math", "Programing"};
                     cmbSubj = new JComboBox<>(optProg);
-                    cmbSubj.setBounds(35, 259, 842, 53);
+                    cmbSubj.setBounds(32, 250, 842, 53);
                     cmbSubj.setFont (new Font("Segoe UI", Font.BOLD, 20));
                     frmAddStud.add(cmbSubj); 
                     
                 lblGrade = new JLabel ("Grade");
                 lblGrade.setForeground(Color.BLACK);
                 lblGrade.setFont(new Font("Segoe UI", Font.BOLD, 20));
-                lblGrade.setBounds(38, 315, 102, 22);
+                lblGrade.setBounds(32, 315, 102, 22);
                 frmAddStud.add(lblGrade);
                 
                     tfGrade = new JTextField ();
-                    tfGrade.setBounds(31, 343, 843, 53);
+                    tfGrade.setBounds(32, 343, 843, 53);
+                    tfGrade.setFont(new Font("Segoe UI", Font.PLAIN, 20));
                     frmAddStud.add(tfGrade);
                     
                 btnAdd = new JButton ("Add");
-                btnAdd.setBounds(684, 429, 190, 53);
+                btnAdd.setBounds(684, 419, 190, 53);
                 btnAdd.setForeground(Color.WHITE);
                 btnAdd.setBackground(Color.decode("#1f89e5"));
+                btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 25));
                 btnAdd.setFocusPainted(false);
                 btnAdd.setBorderPainted(false);
                 frmAddStud.add(btnAdd);
@@ -160,3 +163,5 @@ public class GradesPanel extends JPanel {
     
     
 }
+
+

@@ -57,8 +57,6 @@ public class DashboardPanel extends JPanel {
         todoPanel.setBounds(45, 410, 560, 490); 
         add(todoPanel);
         
-        
-        
         lblTotalStud = new JLabel ("TOTAL STUDENTS");
         lblTotalStud.setBounds (69, 227, 183, 27);
         lblTotalStud.setFont(new Font("Segoe UI", Font.PLAIN, 17));
@@ -324,5 +322,6 @@ public class DashboardPanel extends JPanel {
         
     }
 }
+
 
 
