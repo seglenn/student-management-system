@@ -6,12 +6,13 @@ import java.awt.event.*;
 
 public class MainPage extends JFrame {
     
-    private JLabel lblTitleOne, lblTitleTwo, lblLogoName, lblLine; 
+    private JLabel lblLogoName, lblLine; 
     private JButton btnDashboard, btnStuds, btnGrades, btnAttendance, selectedButton;
     private JPanel sideBarPanel, contentPanel;
     private CardLayout cardLayout;
     private ImageIcon logoAndName, Line;
     
+   
     MainPage() {
         
         setLayout(null);
@@ -19,37 +20,22 @@ public class MainPage extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Student Management System - Group 3");
         
-//        lblTitleOne = new JLabel("Student");
-//        lblTitleOne.setBounds(100, 50, 73, 31);
-//        lblTitleOne.setForeground(Color.WHITE);
-//        lblTitleOne.setFont(new Font("Segoe UI", Font.BOLD, 16));
-//        add(lblTitleOne);
-//        
-//        lblTitleTwo = new JLabel("Management System");
-//        lblTitleTwo.setBounds(100, 65, 179, 31);
-//        lblTitleTwo.setForeground(Color.WHITE);
-//        lblTitleTwo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-//        add(lblTitleTwo);
-
-        
-        
         sideBarPanel = new JPanel();
         sideBarPanel.setBounds(0, 0, 353, 1080);
         sideBarPanel.setBackground(Color.decode("#202c3c"));
         sideBarPanel.setLayout(null);
         add(sideBarPanel);
         
-        logoAndName = new ImageIcon ("images/logo-and-name.png");
-        Line = new ImageIcon ("images/line.png");
+        logoAndName = new ImageIcon("images/logo-and-name.png");
+        Line = new ImageIcon("images/line.png");
         
-        lblLogoName = new JLabel (logoAndName);
+        lblLogoName = new JLabel(logoAndName);
         lblLogoName.setBounds(50, 37, 277, 55);
         sideBarPanel.add(lblLogoName);
         
-        lblLine = new JLabel (Line); 
+        lblLine = new JLabel(Line);
         lblLine.setBounds(42, 57, 277, 112);
-        sideBarPanel.add(lblLine); 
-        
+        sideBarPanel.add(lblLine);
         
         btnDashboard = new JButton("Dashboard");
         btnDashboard.setBounds(41, 142, 277, 60);
@@ -121,10 +107,18 @@ public class MainPage extends JFrame {
         contentPanel.setBackground(Color.decode("#f6f7f9"));
         add(contentPanel);
         
+        // FIX: GradesPanel and AttendancePanel must be created first so they
+        // can be passed into StudentsPanel. When a student is deleted, the DB
+        // CASCADE removes linked rows, and StudentsPanel then calls
+        // loadGradesFromDB() and loadAttendanceFromDB() to refresh their tables.
+        GradesPanel gradesPanel = new GradesPanel();
+        AttendancePanel attendancePanel = new AttendancePanel();
+        StudentsPanel studentsPanel = new StudentsPanel();
+        
         contentPanel.add(new DashboardPanel(), "Dashboard");
-        contentPanel.add(new StudentsPanel(), "Students");
-        contentPanel.add(new GradesPanel(), "Grades");
-        contentPanel.add(new AttendancePanel(), "Attendance");
+        contentPanel.add(studentsPanel,        "Students");
+        contentPanel.add(gradesPanel,          "Grades");
+        contentPanel.add(attendancePanel,      "Attendance");
         
         cardLayout.show(contentPanel, "Dashboard");
         

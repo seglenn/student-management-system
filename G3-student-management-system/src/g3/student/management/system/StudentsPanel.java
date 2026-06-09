@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.io.File;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
+import java.sql.*;
 
 public class StudentsPanel extends JPanel {
 
@@ -16,6 +17,8 @@ public class StudentsPanel extends JPanel {
     private DefaultTableModel tableModel;
     private JScrollPane scrollPane;
     private boolean isOpen = false;
+    private GradesPanel gradesPanel;
+    private AttendancePanel attendancePanel;
 
     StudentsPanel() {
         setLayout(null);
@@ -32,7 +35,6 @@ public class StudentsPanel extends JPanel {
         lblSubtxt.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         add(lblSubtxt);
 
-        // ===== BUTTONS AT THE TOP =====
         btnAddStud = new JButton("Add Student");
         btnAddStud.setBounds(1100, 104, 140, 45);
         btnAddStud.setBackground(Color.decode("#1f87e2"));
@@ -60,19 +62,16 @@ public class StudentsPanel extends JPanel {
         btnDeleteStud.setCursor(new Cursor(Cursor.HAND_CURSOR));
         add(btnDeleteStud);
 
-        // ===== TABLE SETUP =====
-        String[] columns = {"Photo", "Name", "Email", "Program & Section", "Status"};
+        String[] columns = {"Photo", "Student No.", "Name", "Email", "Program & Section", "Status", "Date Enrolled"};
+
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
             }
-
             @Override
             public Class<?> getColumnClass(int col) {
-                if (col == 0) {
-                    return ImageIcon.class;
-                }
+                if (col == 0) return ImageIcon.class;
                 return String.class;
             }
         };
@@ -89,14 +88,15 @@ public class StudentsPanel extends JPanel {
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(header.getPreferredSize().width, 50));
 
-        studTable.getColumnModel().getColumn(0).setPreferredWidth(60);
-        studTable.getColumnModel().getColumn(0).setMaxWidth(60);
+        studTable.getColumnModel().getColumn(0).setPreferredWidth(90);
+        studTable.getColumnModel().getColumn(0).setMaxWidth(90);
 
         scrollPane = new JScrollPane(studTable);
-        scrollPane.setBounds(45, 160, 1450, 690);
+        scrollPane.setBounds(45, 200, 1450, 690);
         add(scrollPane);
 
-        // ===== BUTTON ACTIONS =====
+        loadStudentsFromDB();
+
         btnAddStud.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -128,11 +128,32 @@ public class StudentsPanel extends JPanel {
                     return;
                 }
 
-                int confirm = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this student?", "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                int confirm = JOptionPane.showConfirmDialog(null,
+                        "Are you sure you want to delete this student?\nGrades and attendance records will be kept.",
+                        "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    tableModel.removeRow(selectedRow);
-                    JOptionPane.showMessageDialog(null, "Student deleted successfully!", "Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    String studentNumber = (String) tableModel.getValueAt(selectedRow, 1);
+
+                    try {
+                        Connection connection = DriverManager.getConnection(
+                                "jdbc:mysql://localhost:3306/sms_db", "root", "");
+                        PreparedStatement st = connection.prepareStatement(
+                                "DELETE FROM students WHERE student_number = ?");
+                        st.setString(1, studentNumber);
+                        st.executeUpdate();
+                        st.close();
+                        connection.close();
+
+                        // Remove only from Students panel display
+                        tableModel.removeRow(selectedRow);
+
+                        JOptionPane.showMessageDialog(null, "Student deleted successfully!", "Deleted", JOptionPane.INFORMATION_MESSAGE);
+
+                    } catch (SQLException sqlException) {
+                        sqlException.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error deleting student: " + sqlException.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -141,14 +162,66 @@ public class StudentsPanel extends JPanel {
         imgDisplay = new JLabel(imgDashOne);
         imgDisplay.setBounds(1153, 589, 417, 491);
         add(imgDisplay);
-
-     
     }
 
- 
+    public void setGradesPanel(GradesPanel gradesPanel) {
+        this.gradesPanel = gradesPanel;
+    }
+
+    public void setAttendancePanel(AttendancePanel attendancePanel) {
+        this.attendancePanel = attendancePanel;
+    }
+
+    private void loadStudentsFromDB() {
+        tableModel.setRowCount(0);
+
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+
+            PreparedStatement ps = connection.prepareStatement(
+                    "SELECT student_number, first_name, last_name, email, phone, " +
+                    "program_section, status, photo_path, " +
+                    "DATE_FORMAT(date_enrolled, '%m/%d/%Y') AS date_enrolled " +
+                    "FROM students ORDER BY date_enrolled DESC");
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String studentNumber = rs.getString("student_number");
+                String fullName      = rs.getString("first_name") + " " + rs.getString("last_name");
+                String email         = rs.getString("email");
+                String program       = rs.getString("program_section");
+                String status        = rs.getString("status");
+                String photoPath     = rs.getString("photo_path");
+                String dateEnrolled  = rs.getString("date_enrolled");
+
+                ImageIcon tablePhoto = null;
+                if (photoPath != null && !photoPath.isEmpty()) {
+                    ImageIcon raw = new ImageIcon(photoPath);
+                    Image scaled = raw.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+                    tablePhoto = new ImageIcon(scaled);
+                }
+
+                tableModel.addRow(new Object[]{tablePhoto, studentNumber, fullName, email, program, status, dateEnrolled});
+            }
+
+            rs.close();
+            ps.close();
+            connection.close();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading students: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void openAddStudentFrame() {
-        
+
+        JLabel lblAddStud, lblSubtitle, lblStudNum, lblPhoto, lblStatus, lblFirstName, lblLastName, lblEmail, lblPhone, lblProgram, lblAddress;
+        JTextField tfPhotoPath, tfFName, tfLName, tfEmail, tfPhone, tfAddress;
+        JComboBox<String> cmbStatus, cmbProgram;
+        JButton btnBrowse, btnCancel, btnAdd;
+        JLabel lblPhotoPreview;
+
         JFrame frmAddStud = new JFrame();
         frmAddStud.setSize(712, 820);
         frmAddStud.setLayout(null);
@@ -164,19 +237,19 @@ public class StudentsPanel extends JPanel {
             }
         });
 
-        JLabel lblAddStud = new JLabel("Add new student");
+        lblAddStud = new JLabel("Add new student");
         lblAddStud.setForeground(Color.BLACK);
         lblAddStud.setFont(new Font("Segoe UI", Font.BOLD, 25));
         lblAddStud.setBounds(35, 36, 357, 39);
         frmAddStud.add(lblAddStud);
 
-        JLabel lblSubtitle = new JLabel("Fill in the required details below");
+        lblSubtitle = new JLabel("Fill in the required details below");
         lblSubtitle.setForeground(Color.decode("#737373"));
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         lblSubtitle.setBounds(35, 70, 372, 27);
         frmAddStud.add(lblSubtitle);
 
-        JLabel lblStudNum = new JLabel("Student number will be auto-generated (e.g. 2026-0001)");
+        lblStudNum = new JLabel("Student number will be auto-generated (e.g. 2026-0001)");
         lblStudNum.setForeground(Color.decode("#737373"));
         lblStudNum.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblStudNum.setBorder(BorderFactory.createCompoundBorder(
@@ -187,14 +260,13 @@ public class StudentsPanel extends JPanel {
         lblStudNum.setBounds(35, 112, 634, 40);
         frmAddStud.add(lblStudNum);
 
-        // Photo Section
-        JLabel lblPhoto = new JLabel("Student Photo");
+        lblPhoto = new JLabel("Student Photo");
         lblPhoto.setForeground(Color.BLACK);
         lblPhoto.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblPhoto.setBounds(35, 168, 200, 28);
         frmAddStud.add(lblPhoto);
 
-        JLabel lblPhotoPreview = new JLabel();
+        lblPhotoPreview = new JLabel();
         lblPhotoPreview.setBounds(35, 200, 80, 80);
         lblPhotoPreview.setBackground(Color.decode("#e3f2fd"));
         lblPhotoPreview.setOpaque(true);
@@ -205,7 +277,7 @@ public class StudentsPanel extends JPanel {
         lblPhotoPreview.setForeground(Color.decode("#737373"));
         frmAddStud.add(lblPhotoPreview);
 
-        JTextField tfPhotoPath = new JTextField("No file chosen");
+        tfPhotoPath = new JTextField("No file chosen");
         tfPhotoPath.setBounds(125, 220, 390, 45);
         tfPhotoPath.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         tfPhotoPath.setForeground(Color.GRAY);
@@ -214,7 +286,7 @@ public class StudentsPanel extends JPanel {
 
         String[] chosenImagePath = {""};
 
-        JButton btnBrowse = new JButton("Browse");
+        btnBrowse = new JButton("Browse");
         btnBrowse.setBounds(525, 220, 110, 45);
         btnBrowse.setForeground(Color.WHITE);
         btnBrowse.setBackground(Color.decode("#1f87e2"));
@@ -224,6 +296,7 @@ public class StudentsPanel extends JPanel {
         btnBrowse.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddStud.add(btnBrowse);
 
+        JLabel finalLblPhotoPreview = lblPhotoPreview;
         btnBrowse.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -235,103 +308,94 @@ public class StudentsPanel extends JPanel {
                     chosenImagePath[0] = file.getAbsolutePath();
                     tfPhotoPath.setText(file.getName());
                     tfPhotoPath.setForeground(Color.BLACK);
-
                     ImageIcon icon = new ImageIcon(chosenImagePath[0]);
                     Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-                    lblPhotoPreview.setIcon(new ImageIcon(scaled));
-                    lblPhotoPreview.setText("");
+                    finalLblPhotoPreview.setIcon(new ImageIcon(scaled));
+                    finalLblPhotoPreview.setText("");
                 }
             }
         });
 
-        // Status
-        JLabel lblStatus = new JLabel("Status");
+        lblStatus = new JLabel("Status");
         lblStatus.setForeground(Color.BLACK);
         lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblStatus.setBounds(35, 300, 122, 28);
         frmAddStud.add(lblStatus);
 
         String[] optStatus = {"Active", "Suspended", "Graduated", "Dropped", "Transferred"};
-        JComboBox<String> cmbStatus = new JComboBox<>(optStatus);
+        cmbStatus = new JComboBox<>(optStatus);
         cmbStatus.setBounds(35, 332, 200, 45);
         cmbStatus.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(cmbStatus);
 
-        // First Name
-        JLabel lblFirstName = new JLabel("First Name");
+        lblFirstName = new JLabel("First Name");
         lblFirstName.setForeground(Color.BLACK);
         lblFirstName.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblFirstName.setBounds(35, 393, 200, 28);
         frmAddStud.add(lblFirstName);
 
-        JTextField tfFName = new JTextField();
+        tfFName = new JTextField();
         tfFName.setBounds(35, 425, 300, 45);
         tfFName.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(tfFName);
 
-        // Last Name
-        JLabel lblLastName = new JLabel("Last Name");
+        lblLastName = new JLabel("Last Name");
         lblLastName.setForeground(Color.BLACK);
         lblLastName.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblLastName.setBounds(369, 393, 200, 28);
         frmAddStud.add(lblLastName);
 
-        JTextField tfLName = new JTextField();
+        tfLName = new JTextField();
         tfLName.setBounds(369, 425, 300, 45);
         tfLName.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(tfLName);
 
-        // Email
-        JLabel lblEmail = new JLabel("Email");
+        lblEmail = new JLabel("Email");
         lblEmail.setForeground(Color.BLACK);
         lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblEmail.setBounds(35, 486, 122, 28);
         frmAddStud.add(lblEmail);
 
-        JTextField tfEmail = new JTextField();
+        tfEmail = new JTextField();
         tfEmail.setBounds(35, 518, 634, 45);
         tfEmail.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(tfEmail);
 
-        // Phone
-        JLabel lblPhone = new JLabel("Phone");
+        lblPhone = new JLabel("Phone");
         lblPhone.setForeground(Color.BLACK);
         lblPhone.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblPhone.setBounds(35, 579, 122, 28);
         frmAddStud.add(lblPhone);
 
-        JTextField tfPhone = new JTextField();
+        tfPhone = new JTextField();
         tfPhone.setBounds(35, 611, 300, 45);
         tfPhone.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(tfPhone);
 
-        // Program & Section
-        JLabel lblProgram = new JLabel("Program & Section");
+        lblProgram = new JLabel("Program & Section");
         lblProgram.setForeground(Color.BLACK);
         lblProgram.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblProgram.setBounds(369, 579, 250, 28);
         frmAddStud.add(lblProgram);
 
         String[] optProgram = {"BSIT - 1A", "BSIT - 1B", "BSIT - 2A", "BSIT - 2B", "CS - 1A", "CS - 2A", "DIT - 1A"};
-        JComboBox<String> cmbProgram = new JComboBox<>(optProgram);
+        cmbProgram = new JComboBox<>(optProgram);
         cmbProgram.setBounds(369, 611, 300, 45);
         cmbProgram.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(cmbProgram);
 
-        // Address
-        JLabel lblAddress = new JLabel("Address");
+        lblAddress = new JLabel("Address");
         lblAddress.setForeground(Color.BLACK);
         lblAddress.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblAddress.setBounds(35, 672, 122, 28);
         frmAddStud.add(lblAddress);
 
-        JTextField tfAddress = new JTextField();
+        tfAddress = new JTextField();
         tfAddress.setBounds(35, 704, 634, 45);
         tfAddress.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddStud.add(tfAddress);
 
-        // Buttons
-        JButton btnCancel = new JButton("Cancel");
+        btnCancel = new JButton("Cancel");
         btnCancel.setBounds(384, 762, 110, 45);
         btnCancel.setForeground(Color.decode("#374151"));
         btnCancel.setBackground(new Color(243, 244, 246));
@@ -347,7 +411,7 @@ public class StudentsPanel extends JPanel {
             }
         });
 
-        JButton btnAdd = new JButton("Add Student");
+        btnAdd = new JButton("Add Student");
         btnAdd.setBounds(504, 762, 160, 45);
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBackground(Color.decode("#1f89e5"));
@@ -357,35 +421,94 @@ public class StudentsPanel extends JPanel {
         btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddStud.add(btnAdd);
 
+        JComboBox<String> finalCmbStatus  = cmbStatus;
+        JComboBox<String> finalCmbProgram = cmbProgram;
+        JTextField finalTfFName   = tfFName;
+        JTextField finalTfLName   = tfLName;
+        JTextField finalTfEmail   = tfEmail;
+        JTextField finalTfPhone   = tfPhone;
+        JTextField finalTfAddress = tfAddress;
+
         btnAdd.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String firstName = tfFName.getText().trim();
-                String lastName = tfLName.getText().trim();
-                String email = tfEmail.getText().trim();
-                String phone = tfPhone.getText().trim();
-                String address = tfAddress.getText().trim();
-                String status = (String) cmbStatus.getSelectedItem();
-                String program = (String) cmbProgram.getSelectedItem();
+                String firstName = finalTfFName.getText().trim();
+                String lastName  = finalTfLName.getText().trim();
+                String email     = finalTfEmail.getText().trim();
+                String phone     = finalTfPhone.getText().trim();
+                String address   = finalTfAddress.getText().trim();
+                String status    = (String) finalCmbStatus.getSelectedItem();
+                String program   = (String) finalCmbProgram.getSelectedItem();
 
                 if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
                     JOptionPane.showMessageDialog(frmAddStud, "Please fill in all the information.", "Validation", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
-                String fullName = firstName + " " + lastName;
+                try {
+                    Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-                ImageIcon tablePhoto = null;
-                if (!chosenImagePath[0].isEmpty()) {
-                    ImageIcon raw = new ImageIcon(chosenImagePath[0]);
-                    Image scaled = raw.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-                    tablePhoto = new ImageIcon(scaled);
+                    PreparedStatement ps = connection.prepareStatement(
+                            "INSERT INTO students (student_number, first_name, last_name, email, phone, address, program_section, status, photo_path) " +
+                            "VALUES ('TEMP', ?, ?, ?, ?, ?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    ps.setString(1, firstName);
+                    ps.setString(2, lastName);
+                    ps.setString(3, email);
+                    ps.setString(4, phone);
+                    ps.setString(5, address);
+                    ps.setString(6, program);
+                    ps.setString(7, status);
+                    ps.setString(8, chosenImagePath[0]);
+                    ps.executeUpdate();
+
+                    ResultSet generatedKeys = ps.getGeneratedKeys();
+                    int newStudentId = 0;
+                    if (generatedKeys.next()) {
+                        newStudentId = generatedKeys.getInt(1);
+                    }
+
+                    PreparedStatement updatePs = connection.prepareStatement(
+                            "UPDATE students SET student_number = CONCAT(YEAR(date_enrolled), '-', LPAD(student_id, 4, '0')) WHERE student_id = ?");
+                    updatePs.setInt(1, newStudentId);
+                    updatePs.executeUpdate();
+
+                    PreparedStatement fetchPs = connection.prepareStatement(
+                            "SELECT student_number, DATE_FORMAT(date_enrolled, '%m/%d/%Y') AS date_enrolled FROM students WHERE student_id = ?");
+                    fetchPs.setInt(1, newStudentId);
+                    ResultSet rs = fetchPs.executeQuery();
+
+                    String studentNumber = "";
+                    String dateEnrolled  = "";
+                    if (rs.next()) {
+                        studentNumber = rs.getString("student_number");
+                        dateEnrolled  = rs.getString("date_enrolled");
+                    }
+
+                    rs.close();
+                    fetchPs.close();
+                    updatePs.close();
+                    generatedKeys.close();
+                    ps.close();
+                    connection.close();
+
+                    ImageIcon tablePhoto = null;
+                    if (!chosenImagePath[0].isEmpty()) {
+                        ImageIcon raw = new ImageIcon(chosenImagePath[0]);
+                        Image scaled = raw.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+                        tablePhoto = new ImageIcon(scaled);
+                    }
+
+                    String fullName = firstName + " " + lastName;
+                    tableModel.addRow(new Object[]{tablePhoto, studentNumber, fullName, email, program, status, dateEnrolled});
+
+                    JOptionPane.showMessageDialog(frmAddStud, "Student added: " + fullName, "Success", JOptionPane.INFORMATION_MESSAGE);
+                    frmAddStud.dispose();
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(frmAddStud, "Error saving student: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
-
-                tableModel.addRow(new Object[]{tablePhoto, fullName, email, program, status});
-
-                JOptionPane.showMessageDialog(frmAddStud, "Student added: " + fullName, "Success", JOptionPane.INFORMATION_MESSAGE);
-                frmAddStud.dispose();
             }
         });
 
@@ -393,123 +516,14 @@ public class StudentsPanel extends JPanel {
     }
 
     private void openViewFrame(int row) {
+        ImageIcon photoIcon  = (ImageIcon) tableModel.getValueAt(row, 0);
+        String studentNumber = (String) tableModel.getValueAt(row, 1);
+        String name          = (String) tableModel.getValueAt(row, 2);
+        String email         = (String) tableModel.getValueAt(row, 3);
+        String program       = (String) tableModel.getValueAt(row, 4);
+        String status        = (String) tableModel.getValueAt(row, 5);
+        String dateEnrolled  = (String) tableModel.getValueAt(row, 6);
 
-        ImageIcon photoIcon = (ImageIcon) tableModel.getValueAt(row, 0);
-        String name = (String) tableModel.getValueAt(row, 1);
-        String email = (String) tableModel.getValueAt(row, 2);
-        String program = (String) tableModel.getValueAt(row, 3);
-        String status = (String) tableModel.getValueAt(row, 4);
-
-        JFrame viewWindow = new JFrame();
-        viewWindow.setSize(460, 530);
-        viewWindow.setLayout(null);
-        viewWindow.setLocationRelativeTo(null);
-        viewWindow.setTitle("STUDENT DETAILS");
-        viewWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        viewWindow.getContentPane().setBackground(Color.WHITE);
-
-        // Photo Section
-        JLabel photoLabel = new JLabel();
-        photoLabel.setBounds(155, 30, 150, 150);
-        photoLabel.setBackground(Color.decode("#e3f2fd"));
-        photoLabel.setOpaque(true);
-        photoLabel.setBorder(BorderFactory.createLineBorder(Color.decode("#1f87e2"), 2));
-        photoLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        if (photoIcon != null) {
-            Image resizedPhoto = photoIcon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-            photoLabel.setIcon(new ImageIcon(resizedPhoto));
-            photoLabel.setText("");
-        } else {
-            photoLabel.setText("No Photo Available");
-            photoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            photoLabel.setForeground(Color.decode("#737373"));
-        }
-        viewWindow.add(photoLabel);
-
-        // Title Section
-        JLabel titleLabel = new JLabel("Student Details");
-        titleLabel.setForeground(Color.BLACK);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        titleLabel.setBounds(35, 200, 300, 35);
-        viewWindow.add(titleLabel);
-
-        JSeparator separatorLine = new JSeparator();
-        separatorLine.setBounds(35, 240, 390, 2);
-        separatorLine.setForeground(new Color(220, 220, 220));
-        viewWindow.add(separatorLine);
-
-        // Student Information
-        JLabel nameLabel = new JLabel("Full Name:");
-        nameLabel.setForeground(Color.decode("#737373"));
-        nameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        nameLabel.setBounds(35, 255, 130, 28);
-        viewWindow.add(nameLabel);
-
-        JLabel nameValue = new JLabel(name);
-        nameValue.setForeground(Color.BLACK);
-        nameValue.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        nameValue.setBounds(175, 255, 240, 28);
-        viewWindow.add(nameValue);
-
-        JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setForeground(Color.decode("#737373"));
-        emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        emailLabel.setBounds(35, 295, 130, 28);
-        viewWindow.add(emailLabel);
-
-        JLabel emailValue = new JLabel(email);
-        emailValue.setForeground(Color.BLACK);
-        emailValue.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        emailValue.setBounds(175, 295, 240, 28);
-        viewWindow.add(emailValue);
-
-        JLabel programLabel = new JLabel("Program:");
-        programLabel.setForeground(Color.decode("#737373"));
-        programLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        programLabel.setBounds(35, 335, 130, 28);
-        viewWindow.add(programLabel);
-
-        JLabel programValue = new JLabel(program);
-        programValue.setForeground(Color.BLACK);
-        programValue.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        programValue.setBounds(175, 335, 240, 28);
-        viewWindow.add(programValue);
-
-        JLabel statusLabel = new JLabel("Status:");
-        statusLabel.setForeground(Color.decode("#737373"));
-        statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        statusLabel.setBounds(35, 375, 130, 28);
-        viewWindow.add(statusLabel);
-
-        JLabel statusValue = new JLabel(status);
-        statusValue.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        if (status.equals("Active")) {
-            statusValue.setForeground(Color.decode("#16a34a"));
-        } else {
-            statusValue.setForeground(Color.decode("#e53935"));
-        }
-        statusValue.setBounds(175, 375, 240, 28);
-        viewWindow.add(statusValue);
-
-        // Close Button
-        JButton closeButton = new JButton("Close");
-        closeButton.setBounds(155, 440, 150, 45);
-        closeButton.setForeground(Color.WHITE);
-        closeButton.setBackground(Color.decode("#1f87e2"));
-        closeButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        closeButton.setFocusPainted(false);
-        closeButton.setBorderPainted(false);
-        closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        viewWindow.add(closeButton);
-
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                viewWindow.dispose();
-            }
-        });
-
-        viewWindow.setVisible(true);
+        new ViewStudent(photoIcon, studentNumber, name, email, program, status, dateEnrolled);
     }
 }
