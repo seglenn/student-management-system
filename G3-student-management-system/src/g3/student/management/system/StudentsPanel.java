@@ -36,27 +36,27 @@ public class StudentsPanel extends JPanel {
         add(lblSubtxt);
 
         btnAddStud = new JButton("Add Student");
-        btnAddStud.setBounds(1100, 104, 140, 45);
+        btnAddStud.setBounds(743, 104, 230, 61);
         btnAddStud.setBackground(Color.decode("#1f87e2"));
-        btnAddStud.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnAddStud.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnAddStud.setForeground(Color.WHITE);
         btnAddStud.setFocusPainted(false);
         btnAddStud.setCursor(new Cursor(Cursor.HAND_CURSOR));
         add(btnAddStud);
 
         btnViewStud = new JButton("View Student");
-        btnViewStud.setBounds(1250, 104, 140, 45);
+        btnViewStud.setBounds(1003, 104, 230, 61);
         btnViewStud.setBackground(Color.decode("#1f87e2"));
-        btnViewStud.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnViewStud.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnViewStud.setForeground(Color.WHITE);
         btnViewStud.setFocusPainted(false);
         btnViewStud.setCursor(new Cursor(Cursor.HAND_CURSOR));
         add(btnViewStud);
 
         btnDeleteStud = new JButton("Delete Student");
-        btnDeleteStud.setBounds(1400, 104, 140, 45);
+        btnDeleteStud.setBounds(1263, 104, 230, 61);
         btnDeleteStud.setBackground(Color.decode("#e53935"));
-        btnDeleteStud.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnDeleteStud.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnDeleteStud.setForeground(Color.WHITE);
         btnDeleteStud.setFocusPainted(false);
         btnDeleteStud.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -146,7 +146,6 @@ public class StudentsPanel extends JPanel {
                         connection.close();
 
                         tableModel.removeRow(selectedRow);
-
                         JOptionPane.showMessageDialog(null, "Student deleted successfully!", "Deleted", JOptionPane.INFORMATION_MESSAGE);
 
                     } catch (SQLException sqlException) {
@@ -178,7 +177,7 @@ public class StudentsPanel extends JPanel {
             Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
 
             PreparedStatement ps = connection.prepareStatement(
-                    "SELECT student_number, first_name, last_name, email, phone, " +
+                    "SELECT student_number, first_name, last_name, email, " +
                     "program_section, status, photo_path, " +
                     "DATE_FORMAT(date_enrolled, '%m/%d/%Y') AS date_enrolled " +
                     "FROM students ORDER BY date_enrolled DESC");
@@ -213,45 +212,6 @@ public class StudentsPanel extends JPanel {
         }
     }
 
-    // ===== GENERATE STUDENT NUMBER (Java side - no wasted numbers) =====
-    private String generateStudentNumber() {
-        int currentYear = java.time.Year.now().getValue();
-        String prefix = currentYear + "-";
-        
-        try {
-            Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/sms_db", "root", "");
-            
-            String sql = "SELECT student_number FROM students " +
-                         "WHERE student_number LIKE ? " +
-                         "ORDER BY student_number DESC LIMIT 1";
-            
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, prefix + "%");
-            ResultSet rs = ps.executeQuery();
-            
-            int lastNumber = 0;
-            if (rs.next()) {
-                String lastStudentNumber = rs.getString("student_number");
-                String[] parts = lastStudentNumber.split("-");
-                if (parts.length == 2) {
-                    lastNumber = Integer.parseInt(parts[1]);
-                }
-            }
-            
-            rs.close();
-            ps.close();
-            conn.close();
-            
-            int nextNumber = lastNumber + 1;
-            return String.format("%s%04d", prefix, nextNumber);
-            
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return prefix + "0001";
-        }
-    }
-
     private void openAddStudentFrame() {
 
         JLabel lblAddStud, lblSubtitle, lblStudNum, lblPhoto, lblStatus, lblFirstName, lblLastName, lblEmail, lblPhone, lblProgram, lblAddress;
@@ -261,7 +221,7 @@ public class StudentsPanel extends JPanel {
         JLabel lblPhotoPreview;
 
         JFrame frmAddStud = new JFrame();
-        frmAddStud.setSize(712, 820);
+        frmAddStud.setSize(712, 860);
         frmAddStud.setLayout(null);
         frmAddStud.setLocationRelativeTo(null);
         frmAddStud.setTitle("ADD NEW STUDENT");
@@ -478,45 +438,62 @@ public class StudentsPanel extends JPanel {
                 String status    = (String) finalCmbStatus.getSelectedItem();
                 String program   = (String) finalCmbProgram.getSelectedItem();
 
-                // ===== VALIDATION FIRST (NO NUMBER GENERATED YET) =====
-                if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty()) {
-                    JOptionPane.showMessageDialog(frmAddStud, 
-                        "Please fill in First Name, Last Name, and Email.", 
-                        "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                if (!email.contains("@") || !email.contains(".")) {
-                    JOptionPane.showMessageDialog(frmAddStud, 
-                        "Please enter a valid email address.", 
-                        "Validation", JOptionPane.WARNING_MESSAGE);
+                if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty()) {
+                    JOptionPane.showMessageDialog(frmAddStud, "Please fill in all the information.", "Validation", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
-                // ===== ONLY GENERATE NUMBER AFTER VALIDATION PASSES =====
-                String studentNumber = generateStudentNumber();
+                if (!email.contains("@") || !email.contains(".")) {
+                    JOptionPane.showMessageDialog(frmAddStud, "Please enter a valid email address.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
                 try {
                     Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-                    // Insert with generated student number (no TEMP needed)
+                    // Insert without student_number — the DB trigger generates it automatically
                     PreparedStatement ps = connection.prepareStatement(
-                            "INSERT INTO students (student_number, first_name, last_name, email, phone, address, program_section, status, photo_path) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    ps.setString(1, studentNumber);
-                    ps.setString(2, firstName);
-                    ps.setString(3, lastName);
-                    ps.setString(4, email);
-                    ps.setString(5, phone);
-                    ps.setString(6, address);
-                    ps.setString(7, program);
-                    ps.setString(8, status);
-                    ps.setString(9, chosenImagePath[0]);
+                            "INSERT INTO students (first_name, last_name, email, phone, address, program_section, status, photo_path) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    ps.setString(1, firstName);
+                    ps.setString(2, lastName);
+                    ps.setString(3, email);
+                    ps.setString(4, phone);
+                    ps.setString(5, address);
+                    ps.setString(6, program);
+                    ps.setString(7, status);
+                    ps.setString(8, chosenImagePath[0]);
                     ps.executeUpdate();
 
+                    // Get the new student_id from the insert
+                    ResultSet generatedKeys = ps.getGeneratedKeys();
+                    int newStudentId = 0;
+                    if (generatedKeys.next()) {
+                        newStudentId = generatedKeys.getInt(1);
+                    }
+
+                    // Fetch the student_number and date_enrolled that the DB trigger generated
+                    PreparedStatement fetchPs = connection.prepareStatement(
+                            "SELECT student_number, DATE_FORMAT(date_enrolled, '%m/%d/%Y') AS date_enrolled " +
+                            "FROM students WHERE student_id = ?");
+                    fetchPs.setInt(1, newStudentId);
+                    ResultSet rs = fetchPs.executeQuery();
+
+                    String studentNumber = "";
+                    String dateEnrolled  = "";
+                    if (rs.next()) {
+                        studentNumber = rs.getString("student_number");
+                        dateEnrolled  = rs.getString("date_enrolled");
+                    }
+
+                    rs.close();
+                    fetchPs.close();
+                    generatedKeys.close();
                     ps.close();
                     connection.close();
 
+                    // Build photo for table
                     ImageIcon tablePhoto = null;
                     if (!chosenImagePath[0].isEmpty()) {
                         ImageIcon raw = new ImageIcon(chosenImagePath[0]);
@@ -525,27 +502,19 @@ public class StudentsPanel extends JPanel {
                     }
 
                     String fullName = firstName + " " + lastName;
-                    java.util.Date today = new java.util.Date();
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM/dd/yyyy");
-                    String dateEnrolled = sdf.format(today);
-                    
                     tableModel.addRow(new Object[]{tablePhoto, studentNumber, fullName, email, program, status, dateEnrolled});
 
-                    JOptionPane.showMessageDialog(frmAddStud, 
-                        "Student added successfully!\nStudent Number: " + studentNumber, 
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(frmAddStud,
+                            "Student added successfully!\nStudent Number: " + studentNumber,
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
                     frmAddStud.dispose();
 
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                     if (ex.getMessage().contains("Duplicate entry")) {
-                        JOptionPane.showMessageDialog(frmAddStud, 
-                            "Student number already exists. Please try again.", 
-                            "Duplicate Error", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(frmAddStud, "Email already exists. Please use a different email.", "Duplicate Error", JOptionPane.WARNING_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(frmAddStud, 
-                            "Error saving student: " + ex.getMessage(), 
-                            "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frmAddStud, "Error saving student: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }

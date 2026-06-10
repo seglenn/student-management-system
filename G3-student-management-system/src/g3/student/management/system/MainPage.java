@@ -7,12 +7,11 @@ import java.awt.event.*;
 public class MainPage extends JFrame {
     
     private JLabel lblLogoName, lblLine; 
-    private JButton btnDashboard, btnStuds, btnGrades, btnAttendance, selectedButton;
+    private JButton btnDashboard, btnStuds, btnGrades, btnAttendance, btnLogout, selectedButton;
     private JPanel sideBarPanel, contentPanel;
     private CardLayout cardLayout;
     private ImageIcon logoAndName, Line;
     
-   
     MainPage() {
         
         setLayout(null);
@@ -72,14 +71,26 @@ public class MainPage extends JFrame {
         btnAttendance.setFocusPainted(false);
         btnAttendance.setBorderPainted(false);
         sideBarPanel.add(btnAttendance);
+
+        // ── Logout button — pinned to bottom of sidebar ───────────
+        btnLogout = new JButton("Logout");
+        btnLogout.setBounds(41, 930, 277, 60);
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setBackground(Color.decode("#e53935"));
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 25));
+        btnLogout.setFocusPainted(false);
+        btnLogout.setBorderPainted(false);
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        sideBarPanel.add(btnLogout);
         
         selectedButton = btnDashboard;
         selectedButton.setBackground(new Color(52, 152, 219));
         selectedButton.setForeground(Color.WHITE);
         
-        JButton[] buttons = {btnDashboard, btnStuds, btnGrades, btnAttendance};
+        // Hover effect only on nav buttons, not logout
+        JButton[] navButtons = {btnDashboard, btnStuds, btnGrades, btnAttendance};
         
-        for (JButton button : buttons) {
+        for (JButton button : navButtons) {
             button.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -89,7 +100,6 @@ public class MainPage extends JFrame {
                         button.setFont(new Font("Segoe UI", Font.BOLD, 25));
                     }
                 }
-                
                 @Override
                 public void mouseExited(MouseEvent e) {
                     if (button != selectedButton) {
@@ -107,18 +117,18 @@ public class MainPage extends JFrame {
         contentPanel.setBackground(Color.decode("#f6f7f9"));
         add(contentPanel);
         
-        // FIX: GradesPanel and AttendancePanel must be created first so they
-        // can be passed into StudentsPanel. When a student is deleted, the DB
-        // CASCADE removes linked rows, and StudentsPanel then calls
-        // loadGradesFromDB() and loadAttendanceFromDB() to refresh their tables.
-        GradesPanel gradesPanel = new GradesPanel();
+        DashboardPanel dashboardPanel   = new DashboardPanel();
+        GradesPanel gradesPanel         = new GradesPanel();
         AttendancePanel attendancePanel = new AttendancePanel();
-        StudentsPanel studentsPanel = new StudentsPanel();
+        StudentsPanel studentsPanel     = new StudentsPanel();
         
-        contentPanel.add(new DashboardPanel(), "Dashboard");
-        contentPanel.add(studentsPanel,        "Students");
-        contentPanel.add(gradesPanel,          "Grades");
-        contentPanel.add(attendancePanel,      "Attendance");
+        studentsPanel.setGradesPanel(gradesPanel);
+        studentsPanel.setAttendancePanel(attendancePanel);
+        
+        contentPanel.add(dashboardPanel,  "Dashboard");
+        contentPanel.add(studentsPanel,   "Students");
+        contentPanel.add(gradesPanel,     "Grades");
+        contentPanel.add(attendancePanel, "Attendance");
         
         cardLayout.show(contentPanel, "Dashboard");
         
@@ -127,6 +137,7 @@ public class MainPage extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(contentPanel, "Dashboard");
                 setSelectedButton(btnDashboard);
+                dashboardPanel.refreshStats();
             }
         });
         
@@ -151,6 +162,25 @@ public class MainPage extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(contentPanel, "Attendance");
                 setSelectedButton(btnAttendance);
+            }
+        });
+
+        // ── Logout action ─────────────────────────────────────────
+        btnLogout.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int confirm = JOptionPane.showConfirmDialog(
+                        MainPage.this,
+                        "Are you sure you want to logout?",
+                        "Confirm Logout",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    dispose();
+                    HomePage homePage = new HomePage();
+                    homePage.setVisible(true);
+                }
             }
         });
         

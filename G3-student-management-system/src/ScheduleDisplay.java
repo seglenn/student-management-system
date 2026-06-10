@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.*;
 
 /**
  *
@@ -16,10 +17,9 @@ import java.awt.event.ActionListener;
  */
 public class ScheduleDisplay extends JFrame {
     
-    // ===== FIELDS / VARIABLES =====
     private JTable table;
     private DefaultTableModel model;
-    private JButton btnAdd, btnDelete;
+    private JButton btnAdd, btnDelete, btnSave;
     
     public ScheduleDisplay() {
         
@@ -42,26 +42,23 @@ public class ScheduleDisplay extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
         buttonPanel.setBackground(Color.WHITE);
         
-        // Create buttons
         btnAdd = new JButton("Add");
         btnDelete = new JButton("Delete");
+        btnSave = new JButton("Save");
         
-        // Style Add button
-        btnAdd.setFocusPainted(false);
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAdd.setBackground(new Color(45, 115, 255));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Style Delete button
-        btnDelete.setFocusPainted(false);
-        btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnDelete.setBackground(new Color(45, 115, 255));
-        btnDelete.setForeground(Color.WHITE);
-        btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Style buttons
+        JButton[] buttons = {btnAdd, btnDelete, btnSave};
+        for (JButton btn : buttons) {
+            btn.setFocusPainted(false);
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            btn.setBackground(new Color(45, 115, 255));
+            btn.setForeground(Color.WHITE);
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
         
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnDelete);
+        buttonPanel.add(btnSave);
         
         topPanel.add(title, BorderLayout.WEST);
         topPanel.add(buttonPanel, BorderLayout.EAST);
@@ -71,8 +68,8 @@ public class ScheduleDisplay extends JFrame {
         model = new DefaultTableModel(columns, 0);
         table = new JTable(model);
         
-        // Add sample schedule data
-        addSampleSchedule();
+        // Load schedule from database
+        loadScheduleFromDB();
         
         // Style the table
         table.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -110,15 +107,89 @@ public class ScheduleDisplay extends JFrame {
             }
         });
         
+        btnSave.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveScheduleToDB();
+            }
+        });
+        
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
     }
     
-    // ===== ADD SAMPLE SCHEDULE DATA =====
-    private void addSampleSchedule() {
-        model.addRow(new Object[]{"8:00 AM - 10:30 AM", "History", "Section A", "403"});
-        model.addRow(new Object[]{"10:30 AM - 12:30 PM", "English", "Section B", "101"});
-        model.addRow(new Object[]{"2:00 PM - 4:30 PM", "Math", "Section C", "202"});
+    // ===== LOAD SCHEDULE FROM DATABASE =====
+    private void loadScheduleFromDB() {
+        model.setRowCount(0);
+        
+        try {
+            Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/sms_db", "root", "");
+            
+            String sql = "SELECT time_slot, subject, section, room FROM schedule ORDER BY schedule_id";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                String timeSlot = rs.getString("time_slot");
+                String subject = rs.getString("subject");
+                String section = rs.getString("section");
+                String room = rs.getString("room");
+                model.addRow(new Object[]{timeSlot, subject, section, room});
+            }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            
+            // If no data, add sample schedule
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"8:00 AM - 10:30 AM", "History", "Section A", "403"});
+                model.addRow(new Object[]{"10:30 AM - 12:30 PM", "English", "Section B", "101"});
+                model.addRow(new Object[]{"2:00 PM - 4:30 PM", "Math", "Section C", "202"});
+            }
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            // Fallback to sample data
+            model.addRow(new Object[]{"8:00 AM - 10:30 AM", "History", "Section A", "403"});
+            model.addRow(new Object[]{"10:30 AM - 12:30 PM", "English", "Section B", "101"});
+            model.addRow(new Object[]{"2:00 PM - 4:30 PM", "Math", "Section C", "202"});
+        }
+    }
+    
+    // ===== SAVE SCHEDULE TO DATABASE =====
+    private void saveScheduleToDB() {
+        try {
+            Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/sms_db", "root", "");
+            
+            // Delete all existing schedule
+            PreparedStatement deleteStmt = conn.prepareStatement("DELETE FROM schedule");
+            deleteStmt.executeUpdate();
+            
+            // Insert current schedule
+            String sql = "INSERT INTO schedule (time_slot, subject, section, room) VALUES (?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            
+            for (int i = 0; i < model.getRowCount(); i++) {
+                ps.setString(1, (String) model.getValueAt(i, 0));
+                ps.setString(2, (String) model.getValueAt(i, 1));
+                ps.setString(3, (String) model.getValueAt(i, 2));
+                ps.setString(4, (String) model.getValueAt(i, 3));
+                ps.addBatch();
+            }
+            
+            ps.executeBatch();
+            ps.close();
+            conn.close();
+            
+            JOptionPane.showMessageDialog(this, "Schedule saved to database successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error saving schedule: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     public static void main(String[] args) {

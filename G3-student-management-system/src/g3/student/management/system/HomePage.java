@@ -9,12 +9,13 @@ public class HomePage extends JFrame {
 
     ImageIcon imgSchool, imgGradient, imgGradientTwo, imgDashOne, imgDashTwo, imgPaper, imgLogoName;
     JLabel imgDashDown, imgDashUp, imgBg, imgGradOne, imgPpr, imgGradTwo, lblWelcome, lblSignIn, lblUsername, lblPass, imgNameLogo, lblSms;
+    JLabel lblCredentials;
     JTextField txtUsername;
     JPasswordField txtPass;
     JButton btnStart;
 
     HomePage() {
- 
+
         setTitle("Student Management System");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -106,6 +107,13 @@ public class HomePage extends JFrame {
         btnStart.setFocusPainted(false);
         btnStart.setBorderPainted(false);
         add(btnStart);
+
+        // ── Default credentials hint shown below the Start button ──
+        lblCredentials = new JLabel("Username: admin || Password: admin123");
+        lblCredentials.setBounds(1271, 708, 357, 22);
+        lblCredentials.setForeground(Color.DARK_GRAY);
+        lblCredentials.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        add(lblCredentials);
 
         btnStart.addActionListener(new ActionListener() {
             @Override

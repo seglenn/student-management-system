@@ -19,12 +19,12 @@ public class AttendancePanel extends JPanel {
     private JScrollPane scrollPane;
     private boolean isOpen = false;
 
-    // Stores "YYYY-NNNN - First Last" display strings; index matches studentIds list
     private JComboBox<String> cmbStudent;
-    private java.util.List<Integer> studentIds = new java.util.ArrayList<>();
+    private java.util.List<Integer> studentIds     = new java.util.ArrayList<>();
+    private java.util.List<String>  studentNumbers = new java.util.ArrayList<>();
+    private java.util.List<String>  studentNames   = new java.util.ArrayList<>();
 
     AttendancePanel() {
-
         setLayout(null);
 
         lblTitle = new JLabel("Attendance");
@@ -48,7 +48,6 @@ public class AttendancePanel extends JPanel {
         btnAddAtt.setCursor(new Cursor(Cursor.HAND_CURSOR));
         add(btnAddAtt);
 
-        // Columns: student_number and name are JOINed from students table
         String[] columns = {"Student No.", "Name", "Course/Subject", "Status", "Date", "Remarks"};
         tableModel = new DefaultTableModel(columns, 0);
         attTable = new JTable(tableModel);
@@ -72,13 +71,8 @@ public class AttendancePanel extends JPanel {
 
         loadAttendanceFromDB();
 
-        btnAddAtt.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!isOpen) {
-                    openAddAttendanceFrame();
-                }
-            }
+        btnAddAtt.addActionListener(e -> {
+            if (!isOpen) openAddAttendanceFrame();
         });
 
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
@@ -87,30 +81,26 @@ public class AttendancePanel extends JPanel {
         add(imgDisplay);
     }
 
-    // JOIN attendance with students to get student_number and full name
+    // Read student_number and student_name directly from attendance table — no JOIN needed
     public void loadAttendanceFromDB() {
         tableModel.setRowCount(0);
 
         try {
-            Connection conn = (Connection) DriverManager.getConnection(
+            Connection conn = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-            String sql = "SELECT s.student_number, " +
-                         "CONCAT(s.first_name, ' ', s.last_name) AS full_name, " +
-                         "a.course_subject, a.status, " +
-                         "DATE_FORMAT(a.date_recorded, '%m/%d/%Y') AS date_recorded, " +
-                         "a.remarks " +
-                         "FROM attendance a " +
-                         "JOIN students s ON a.student_id = s.student_id " +
-                         "ORDER BY a.date_recorded DESC";
+            // student_number and student_name are stored directly in attendance row at insert time
+            String sql = "SELECT student_number, student_name, course_subject, status, " +
+                         "DATE_FORMAT(date_recorded, '%m/%d/%Y') AS date_recorded, remarks " +
+                         "FROM attendance ORDER BY date_recorded DESC";
 
-            PreparedStatement ps = (PreparedStatement) conn.prepareStatement(sql);
+            PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 tableModel.addRow(new Object[]{
                     rs.getString("student_number"),
-                    rs.getString("full_name"),
+                    rs.getString("student_name"),
                     rs.getString("course_subject"),
                     rs.getString("status"),
                     rs.getString("date_recorded"),
@@ -118,62 +108,55 @@ public class AttendancePanel extends JPanel {
                 });
             }
 
-            rs.close();
-            ps.close();
-            conn.close();
+            rs.close(); ps.close(); conn.close();
 
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    // Populates dropdown with "2026-0001 - Juan Dela Cruz"
-    // and keeps a parallel studentIds list so we can insert student_id
+    // Loads student_id, student_number, and full name into parallel lists
     public void loadStudentDropdown() {
         cmbStudent.removeAllItems();
         studentIds.clear();
+        studentNumbers.clear();
+        studentNames.clear();
+
         cmbStudent.addItem("Select student");
-        studentIds.add(-1); // placeholder for index 0
+        studentIds.add(-1);
+        studentNumbers.add("");
+        studentNames.add("");
 
         try {
-            Connection connection = (Connection) DriverManager.getConnection(
+            Connection connection = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-            PreparedStatement ps = (PreparedStatement) connection.prepareStatement(
+            PreparedStatement ps = connection.prepareStatement(
                     "SELECT student_id, student_number, first_name, last_name " +
                     "FROM students ORDER BY last_name, first_name");
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                String display = rs.getString("student_number") + " - " +
-                                 rs.getString("first_name") + " " + rs.getString("last_name");
-                cmbStudent.addItem(display);
+                String num  = rs.getString("student_number");
+                String name = rs.getString("first_name") + " " + rs.getString("last_name");
+                cmbStudent.addItem(num + " - " + name);
                 studentIds.add(rs.getInt("student_id"));
+                studentNumbers.add(num);
+                studentNames.add(name);
             }
 
-            rs.close();
-            ps.close();
-            connection.close();
+            rs.close(); ps.close(); connection.close();
 
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
-    
-    public void removeStudentRows(String studentName) {
-    for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
-        String name = (String) tableModel.getValueAt(i, 1);
-        if (name != null && name.equals(studentName)) {
-            tableModel.removeRow(i);
-        }
-    }
-}
 
     private void openAddAttendanceFrame() {
         isOpen = true;
 
         JFrame frmAddAtt = new JFrame();
-        frmAddAtt.setSize(712, 600);
+        frmAddAtt.setSize(732, 620);
         frmAddAtt.setLayout(null);
         frmAddAtt.setLocationRelativeTo(null);
         frmAddAtt.setTitle("MARK ATTENDANCE");
@@ -181,10 +164,7 @@ public class AttendancePanel extends JPanel {
         frmAddAtt.getContentPane().setBackground(Color.WHITE);
 
         frmAddAtt.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                isOpen = false;
-            }
+            @Override public void windowClosed(WindowEvent e) { isOpen = false; }
         });
 
         JLabel lblHead = new JLabel("Mark Attendance");
@@ -254,7 +234,7 @@ public class AttendancePanel extends JPanel {
         lblCourse.setBounds(35, 325, 200, 28);
         frmAddAtt.add(lblCourse);
 
-        String[] optCourse = {"Select course", "Programming 1", "Programming 2", "Mathematics", "English", "Filipino", "Science", "PE"};
+        String[] optCourse = {"Select course", "English", "Math", "Programming", "Science", "Filipino"};
         JComboBox<String> cmbCourse = new JComboBox<>(optCourse);
         cmbCourse.setBounds(35, 357, 634, 50);
         cmbCourse.setFont(new Font("Segoe UI", Font.PLAIN, 17));
@@ -280,6 +260,7 @@ public class AttendancePanel extends JPanel {
         btnCancel.setFocusPainted(false);
         btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddAtt.add(btnCancel);
+        btnCancel.addActionListener(e -> frmAddAtt.dispose());
 
         JButton btnMark = new JButton("Mark Attendance");
         btnMark.setBounds(504, 518, 190, 45);
@@ -291,62 +272,54 @@ public class AttendancePanel extends JPanel {
         btnMark.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddAtt.add(btnMark);
 
-        btnCancel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                frmAddAtt.dispose();
+        btnMark.addActionListener(e -> {
+            int selectedIndex = cmbStudent.getSelectedIndex();
+            String course  = (String) cmbCourse.getSelectedItem();
+            String status  = (String) cmbStatus.getSelectedItem();
+            String remarks = tfRemarks.getText().trim();
+
+            if (selectedIndex <= 0) {
+                JOptionPane.showMessageDialog(frmAddAtt, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-        });
+            if (course.equals("Select course")) {
+                JOptionPane.showMessageDialog(frmAddAtt, "Please select a course/subject.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
-        btnMark.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedIndex = cmbStudent.getSelectedIndex();
-                String course  = (String) cmbCourse.getSelectedItem();
-                String status  = (String) cmbStatus.getSelectedItem();
-                String remarks = tfRemarks.getText().trim();
+            int    studentId     = studentIds.get(selectedIndex);
+            String studentNumber = studentNumbers.get(selectedIndex);  // stored directly
+            String studentName   = studentNames.get(selectedIndex);    // stored directly
 
-                if (selectedIndex <= 0) {
-                    JOptionPane.showMessageDialog(frmAddAtt, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (course.equals("Select course")) {
-                    JOptionPane.showMessageDialog(frmAddAtt, "Please select a course/subject.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+            try {
+                Connection conn = DriverManager.getConnection(
+                        "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-                // Use the parallel list to get the actual student_id FK
-                int studentId = studentIds.get(selectedIndex);
+                // Save student_id, student_number AND student_name so display
+                // never relies on a JOIN — works even after the student is deleted
+                String sql = "INSERT INTO attendance " +
+                             "(student_id, student_number, student_name, course_subject, status, remarks) " +
+                             "VALUES (?, ?, ?, ?, ?, ?)";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, studentId);
+                ps.setString(2, studentNumber);
+                ps.setString(3, studentName);
+                ps.setString(4, course);
+                ps.setString(5, status);
+                ps.setString(6, remarks);
+                ps.executeUpdate();
 
-                try {
-                    Connection conn = (Connection) DriverManager.getConnection(
-                            "jdbc:mysql://localhost:3306/sms_db", "root", "");
+                ps.close(); conn.close();
 
-                    // Insert using student_id FK — matches the DB schema
-                    String sql = "INSERT INTO attendance (student_id, course_subject, status, remarks) " +
-                                 "VALUES (?, ?, ?, ?)";
-                    PreparedStatement ps = (PreparedStatement) conn.prepareStatement(sql);
-                    ps.setInt(1, studentId);
-                    ps.setString(2, course);
-                    ps.setString(3, status);
-                    ps.setString(4, remarks);
-                    ps.executeUpdate();
+                loadAttendanceFromDB();
+                JOptionPane.showMessageDialog(frmAddAtt,
+                        "Attendance marked for: " + studentName, "Success", JOptionPane.INFORMATION_MESSAGE);
+                frmAddAtt.dispose();
 
-                    ps.close();
-                    conn.close();
-
-                    loadAttendanceFromDB();
-                    JOptionPane.showMessageDialog(frmAddAtt,
-                        "Attendance marked for: " + cmbStudent.getSelectedItem(),
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
-                    frmAddAtt.dispose();
-
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(frmAddAtt,
-                        "Error saving attendance: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frmAddAtt,
+                        "Error saving attendance: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 

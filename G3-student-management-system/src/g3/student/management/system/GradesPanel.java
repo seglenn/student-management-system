@@ -6,8 +6,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-
-
 public class GradesPanel extends JPanel {
 
     JLabel lblTitle, lblSubtxt, imgDisplay;
@@ -18,12 +16,12 @@ public class GradesPanel extends JPanel {
     private JScrollPane scrollPane;
     private boolean isOpen = false;
 
-    // Parallel list — index matches cmbStudent, value is the actual student_id
     private JComboBox<String> cmbStudent;
     private java.util.List<Integer> studentIds = new java.util.ArrayList<>();
+    private java.util.List<String> studentNumbers = new java.util.ArrayList<>();
+    private java.util.List<String> studentNames   = new java.util.ArrayList<>();
 
     GradesPanel() {
-
         setLayout(null);
 
         lblTitle = new JLabel("Grades");
@@ -69,7 +67,6 @@ public class GradesPanel extends JPanel {
         cmbStudent = new JComboBox<>();
 
         loadGradesFromDB();
-
         setupAddButtonListener();
 
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
@@ -78,28 +75,26 @@ public class GradesPanel extends JPanel {
         add(imgDisplay);
     }
 
-    // JOIN grades with students to get student_number and full name
+    // Read student_number and student_name directly from grades table — no JOIN needed
     public void loadGradesFromDB() {
         tableModel.setRowCount(0);
 
         try {
-            Connection conn = (Connection) DriverManager.getConnection(
+            Connection conn = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-            String sql = "SELECT s.student_number, " +
-                         "CONCAT(s.first_name, ' ', s.last_name) AS full_name, " +
-                         "g.course_subject, g.grade, g.equivalent, g.semester, g.remarks " +
-                         "FROM grades g " +
-                         "JOIN students s ON g.student_id = s.student_id " +
-                         "ORDER BY g.date_recorded DESC";
+            // student_number and student_name are stored directly in grades row at insert time
+            String sql = "SELECT student_number, student_name, course_subject, " +
+                         "grade, equivalent, semester, remarks " +
+                         "FROM grades ORDER BY date_recorded DESC";
 
-            PreparedStatement ps = (PreparedStatement) conn.prepareStatement(sql);
+            PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 tableModel.addRow(new Object[]{
                     rs.getString("student_number"),
-                    rs.getString("full_name"),
+                    rs.getString("student_name"),
                     rs.getString("course_subject"),
                     rs.getString("grade"),
                     rs.getString("equivalent"),
@@ -108,75 +103,65 @@ public class GradesPanel extends JPanel {
                 });
             }
 
-            rs.close();
-            ps.close();
-            conn.close();
+            rs.close(); ps.close(); conn.close();
 
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    // Populates dropdown with "2026-0001 - Juan Dela Cruz"
-    // and keeps a parallel studentIds list so we can insert student_id
+    // Loads student_id, student_number, and full name into parallel lists
     public void loadStudentDropdown() {
         cmbStudent.removeAllItems();
         studentIds.clear();
+        studentNumbers.clear();
+        studentNames.clear();
+
         cmbStudent.addItem("Select student");
-        studentIds.add(-1); // placeholder for index 0
+        studentIds.add(-1);
+        studentNumbers.add("");
+        studentNames.add("");
 
         try {
-            Connection connection = (Connection) DriverManager.getConnection(
+            Connection connection = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-            PreparedStatement ps = (PreparedStatement) connection.prepareStatement(
+            PreparedStatement ps = connection.prepareStatement(
                     "SELECT student_id, student_number, first_name, last_name " +
                     "FROM students ORDER BY last_name, first_name");
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                String display = rs.getString("student_number") + " - " +
-                                 rs.getString("first_name") + " " + rs.getString("last_name");
-                cmbStudent.addItem(display);
+                String num  = rs.getString("student_number");
+                String name = rs.getString("first_name") + " " + rs.getString("last_name");
+                cmbStudent.addItem(num + " - " + name);
                 studentIds.add(rs.getInt("student_id"));
+                studentNumbers.add(num);
+                studentNames.add(name);
             }
 
-            rs.close();
-            ps.close();
-            connection.close();
+            rs.close(); ps.close(); connection.close();
 
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
-    
-    public void removeStudentRows(String studentName) {
-    for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
-        String name = (String) tableModel.getValueAt(i, 1);
-        if (name != null && name.equals(studentName)) {
-            tableModel.removeRow(i);
-        }
-    }
-}
 
     private void setupAddButtonListener() {
         for (ActionListener al : btnAddGrade.getActionListeners()) {
             btnAddGrade.removeActionListener(al);
         }
-        btnAddGrade.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                openAddGradeDialog();
-            }
-        });
+        btnAddGrade.addActionListener(e -> openAddGradeDialog());
     }
 
     private void openAddGradeDialog() {
-
-        if (isOpen) return;
+        if (isOpen) {
+            return;
+        }
         isOpen = true;
 
         JFrame frmAddGrade = new JFrame();
-        frmAddGrade.setSize(712, 680);
+        frmAddGrade.setSize(712, 645);
         frmAddGrade.setLayout(null);
         frmAddGrade.setLocationRelativeTo(null);
         frmAddGrade.setTitle("ADD GRADE");
@@ -184,10 +169,7 @@ public class GradesPanel extends JPanel {
         frmAddGrade.getContentPane().setBackground(Color.WHITE);
 
         frmAddGrade.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                isOpen = false;
-            }
+            @Override public void windowClosed(WindowEvent e) { isOpen = false; }
         });
 
         JLabel lblAddGrade = new JLabel("Add Grade");
@@ -270,13 +252,7 @@ public class GradesPanel extends JPanel {
         btnCancel.setFocusPainted(false);
         btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddGrade.add(btnCancel);
-
-        btnCancel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                frmAddGrade.dispose();
-            }
-        });
+        btnCancel.addActionListener(e -> frmAddGrade.dispose());
 
         JButton btnAdd = new JButton("Add Grade");
         btnAdd.setBounds(504, 520, 160, 45);
@@ -288,69 +264,67 @@ public class GradesPanel extends JPanel {
         btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddGrade.add(btnAdd);
 
-        btnAdd.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedIndex = cmbStudent.getSelectedIndex();
-                String course   = (String) cmbCourse.getSelectedItem();
-                String grade    = tfGrade.getText().trim();
-                String semester = (String) cmbSemester.getSelectedItem();
-                String remarks  = tfRemarks.getText().trim();
+        btnAdd.addActionListener(e -> {
+            int selectedIndex = cmbStudent.getSelectedIndex();
+            String course   = (String) cmbCourse.getSelectedItem();
+            String grade    = tfGrade.getText().trim();
+            String semester = (String) cmbSemester.getSelectedItem();
+            String remarks  = tfRemarks.getText().trim();
 
-                if (selectedIndex <= 0) {
-                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (course.equals("Select course")) {
-                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a course.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (grade.isEmpty()) {
-                    JOptionPane.showMessageDialog(frmAddGrade, "Please enter a grade.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (semester.equals("Select")) {
-                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a semester.", "Validation", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+            if (selectedIndex <= 0) {
+                JOptionPane.showMessageDialog(frmAddGrade, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (course.equals("Select course")) {
+                JOptionPane.showMessageDialog(frmAddGrade, "Please select a course.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (grade.isEmpty()) {
+                JOptionPane.showMessageDialog(frmAddGrade, "Please enter a grade.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (semester.equals("Select")) {
+                JOptionPane.showMessageDialog(frmAddGrade, "Please select a semester.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
-                // Use the parallel list to get the actual student_id FK
-                int studentId = studentIds.get(selectedIndex);
+            int    studentId     = studentIds.get(selectedIndex);
+            String studentNumber = studentNumbers.get(selectedIndex);  // stored directly
+            String studentName   = studentNames.get(selectedIndex);    // stored directly
 
-                try {
-                    Connection conn = (Connection) DriverManager.getConnection(
-                            "jdbc:mysql://localhost:3306/sms_db", "root", "");
+            try {
+                Connection conn = DriverManager.getConnection(
+                        "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-                    // Insert using student_id FK — matches the DB schema
-                    String sql = "INSERT INTO grades (student_id, course_subject, grade, semester, remarks) " +
-                                 "VALUES (?, ?, ?, ?, ?)";
-                    PreparedStatement ps = (PreparedStatement) conn.prepareStatement(sql);
-                    ps.setInt(1, studentId);
-                    ps.setString(2, course);
-                    ps.setBigDecimal(3, new java.math.BigDecimal(grade));
-                    ps.setString(4, semester);
-                    ps.setString(5, remarks);
-                    ps.executeUpdate();
+                // Save student_id, student_number AND student_name so display
+                // never relies on a JOIN — works even after the student is deleted
+                String sql = "INSERT INTO grades " +
+                             "(student_id, student_number, student_name, course_subject, grade, semester, remarks) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, studentId);
+                ps.setString(2, studentNumber);
+                ps.setString(3, studentName);
+                ps.setString(4, course);
+                ps.setBigDecimal(5, new java.math.BigDecimal(grade));
+                ps.setString(6, semester);
+                ps.setString(7, remarks);
+                ps.executeUpdate();
 
-                    ps.close();
-                    conn.close();
+                ps.close(); conn.close();
 
-                    loadGradesFromDB();
-                    JOptionPane.showMessageDialog(frmAddGrade,
-                        "Grade added for: " + cmbStudent.getSelectedItem(),
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
-                    frmAddGrade.dispose();
+                loadGradesFromDB();
+                JOptionPane.showMessageDialog(frmAddGrade,
+                        "Grade added for: " + studentName, "Success", JOptionPane.INFORMATION_MESSAGE);
+                frmAddGrade.dispose();
 
-                } catch (NumberFormatException nfe) {
-                    JOptionPane.showMessageDialog(frmAddGrade,
-                        "Grade must be a valid number (e.g. 85 or 92.5).",
-                        "Validation", JOptionPane.WARNING_MESSAGE);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(frmAddGrade,
-                        "Error saving grade: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                }
+            } catch (NumberFormatException nfe) {
+                JOptionPane.showMessageDialog(frmAddGrade,
+                        "Grade must be a valid number (e.g. 85 or 92.5).", "Validation", JOptionPane.WARNING_MESSAGE);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frmAddGrade,
+                        "Error saving grade: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
