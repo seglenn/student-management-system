@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package g3.student.management.system;
 
 import java.awt.*;
@@ -9,80 +5,61 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.sql.*;
 
-/**
- *
- * @author glenn
- */
-public class ViewStudent{
+public class ViewStudent {
     
+    // UI COMPONENTS
     private JFrame viewWindow;
-    private JLabel photoLabel, titleLabel;
-    private JLabel lblStudNo, valStudNo;
-    private JLabel nameLabel, nameValue;
-    private JLabel emailLabel, emailValue;
-    private JLabel phoneLabel, phoneValue;
-    private JLabel programLabel, programValue;
-    private JLabel addressLabel, addressValue;
-    private JLabel statusLabel, statusValue;
-    private JLabel lblDateEnrolled, valDateEnrolled;
-    private JLabel lblAbsences, valAbsences;
-    private JLabel lblPresent, valPresent;
-    private JLabel lblLate, valLate;
+    private JLabel photoLabel, titleLabel, lblStudNo, valStudNo,nameLabel, nameValue ,emailLabel, emailValue, phoneLabel, phoneValue,programLabel, programValue ,addressLabel, addressValue,statusLabel, statusValue,lblDateEnrolled, valDateEnrolled,lblAbsences, valAbsences,lblPresent, valPresent ,lblLate, valLate;
     private JButton closeButton;
     private JSeparator line;
     
     public ViewStudent(ImageIcon photoIcon, String studentNumber, String name, 
-                            String email, String program, String status, String dateEnrolled) {
+                       String email, String program, String status, String dateEnrolled) {
         
-        // Get additional info from database (phone, address, attendance stats)
+        // DEFAULT VALUES
         String phone = "";
         String address = "";
         int absentCount = 0;
         int presentCount = 0;
         int lateCount = 0;
         
-        try {
-            Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/sms_db", "root", "");
+        // FETCH ADDITIONAL DATA
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "")) {
             
-            // Get student details
-            String studentSql = "SELECT phone, address FROM students WHERE student_number = ?";
-            PreparedStatement studentPs = conn.prepareStatement(studentSql);
-            studentPs.setString(1, studentNumber);
-            ResultSet studentRs = studentPs.executeQuery();
-            
-            if (studentRs.next()) {
-                phone = studentRs.getString("phone");
-                address = studentRs.getString("address");
+            // GET STUDENT DETAILS
+            try (PreparedStatement studentPs = conn.prepareStatement("SELECT phone, address FROM students WHERE student_number = ?")) {
+                studentPs.setString(1, studentNumber);
+                try (ResultSet studentRs = studentPs.executeQuery()) {
+                    if (studentRs.next()) {
+                        phone = studentRs.getString("phone");
+                        address = studentRs.getString("address");
+                    }
+                }
             }
-            studentRs.close();
-            studentPs.close();
             
-            // Get attendance statistics
+            // GET ATTENDANCE STATISTICS
             String attendanceSql = "SELECT " +
                 "SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent_count, " +
                 "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) as present_count, " +
                 "SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) as late_count " +
                 "FROM attendance WHERE student_id = (SELECT student_id FROM students WHERE student_number = ?)";
             
-            PreparedStatement attendancePs = conn.prepareStatement(attendanceSql);
-            attendancePs.setString(1, studentNumber);
-            ResultSet attendanceRs = attendancePs.executeQuery();
-            
-            if (attendanceRs.next()) {
-                absentCount = attendanceRs.getInt("absent_count");
-                presentCount = attendanceRs.getInt("present_count");
-                lateCount = attendanceRs.getInt("late_count");
+            try (PreparedStatement attendancePs = conn.prepareStatement(attendanceSql)) {
+                attendancePs.setString(1, studentNumber);
+                try (ResultSet attendanceRs = attendancePs.executeQuery()) {
+                    if (attendanceRs.next()) {
+                        absentCount = attendanceRs.getInt("absent_count");
+                        presentCount = attendanceRs.getInt("present_count");
+                        lateCount = attendanceRs.getInt("late_count");
+                    }
+                }
             }
-            attendanceRs.close();
-            attendancePs.close();
-            
-            conn.close();
             
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         
+        // MAIN WINDOW
         viewWindow = new JFrame();
         viewWindow.setSize(500, 820);
         viewWindow.setLayout(null);
@@ -91,7 +68,7 @@ public class ViewStudent{
         viewWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         viewWindow.getContentPane().setBackground(Color.WHITE);
 
-        // ===== PHOTO SECTION =====
+        // PHOTO SECTION
         photoLabel = new JLabel();
         photoLabel.setBounds(175, 30, 150, 150);
         photoLabel.setBackground(Color.decode("#e3f2fd"));
@@ -110,7 +87,7 @@ public class ViewStudent{
         }
         viewWindow.add(photoLabel);
 
-        // ===== TITLE SECTION =====
+        // TITLE SECTION
         titleLabel = new JLabel("Student Details");
         titleLabel.setForeground(Color.BLACK);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
@@ -122,99 +99,90 @@ public class ViewStudent{
         line.setForeground(new Color(220, 220, 220));
         viewWindow.add(line);
 
-        // ===== STUDENT INFORMATION =====
-        int yPos = 260;
-        int lineHeight = 35;
-        
-        // Student No.
+        // STUDENT INFORMATION
+        // STUDENT NO.
         lblStudNo = new JLabel("Student No.:");
         lblStudNo.setForeground(Color.decode("#737373"));
         lblStudNo.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblStudNo.setBounds(35, yPos, 130, 28);
+        lblStudNo.setBounds(35, 260, 130, 28);
         viewWindow.add(lblStudNo);
 
         valStudNo = new JLabel(studentNumber);
         valStudNo.setForeground(Color.BLACK);
         valStudNo.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        valStudNo.setBounds(175, yPos, 280, 28);
+        valStudNo.setBounds(175, 260, 280, 28);
         viewWindow.add(valStudNo);
-        yPos += lineHeight;
 
-        // Full Name
+        // FULL NAME
         nameLabel = new JLabel("Full Name:");
         nameLabel.setForeground(Color.decode("#737373"));
         nameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        nameLabel.setBounds(35, yPos, 130, 28);
+        nameLabel.setBounds(35, 295, 130, 28);
         viewWindow.add(nameLabel);
 
         nameValue = new JLabel(name);
         nameValue.setForeground(Color.BLACK);
         nameValue.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        nameValue.setBounds(175, yPos, 280, 28);
+        nameValue.setBounds(175, 295, 280, 28);
         viewWindow.add(nameValue);
-        yPos += lineHeight;
 
-        // Email
+        // EMAIL
         emailLabel = new JLabel("Email:");
         emailLabel.setForeground(Color.decode("#737373"));
         emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        emailLabel.setBounds(35, yPos, 130, 28);
+        emailLabel.setBounds(35, 330, 130, 28);
         viewWindow.add(emailLabel);
 
         emailValue = new JLabel(email);
         emailValue.setForeground(Color.BLACK);
         emailValue.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        emailValue.setBounds(175, yPos, 280, 28);
+        emailValue.setBounds(175, 330, 280, 28);
         viewWindow.add(emailValue);
-        yPos += lineHeight;
 
-        // Phone
+        // PHONE
         phoneLabel = new JLabel("Phone:");
         phoneLabel.setForeground(Color.decode("#737373"));
         phoneLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        phoneLabel.setBounds(35, yPos, 130, 28);
+        phoneLabel.setBounds(35, 365, 130, 28);
         viewWindow.add(phoneLabel);
 
         phoneValue = new JLabel(phone);
         phoneValue.setForeground(Color.BLACK);
         phoneValue.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        phoneValue.setBounds(175, yPos, 280, 28);
+        phoneValue.setBounds(175, 365, 280, 28);
         viewWindow.add(phoneValue);
-        yPos += lineHeight;
 
-        // Program
+        // PROGRAM
         programLabel = new JLabel("Program:");
         programLabel.setForeground(Color.decode("#737373"));
         programLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        programLabel.setBounds(35, yPos, 130, 28);
+        programLabel.setBounds(35, 400, 130, 28);
         viewWindow.add(programLabel);
 
         programValue = new JLabel(program);
         programValue.setForeground(Color.BLACK);
         programValue.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        programValue.setBounds(175, yPos, 280, 28);
+        programValue.setBounds(175, 400, 280, 28);
         viewWindow.add(programValue);
-        yPos += lineHeight;
 
-        // Address
+        // ADDRESS
         addressLabel = new JLabel("Address:");
         addressLabel.setForeground(Color.decode("#737373"));
         addressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        addressLabel.setBounds(35, yPos, 130, 28);
+        addressLabel.setBounds(35, 435, 130, 28);
         viewWindow.add(addressLabel);
 
         addressValue = new JLabel(address);
         addressValue.setForeground(Color.BLACK);
         addressValue.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        addressValue.setBounds(175, yPos, 280, 28);
+        addressValue.setBounds(175, 435, 280, 28);
         viewWindow.add(addressValue);
-        yPos += lineHeight;
 
-        // Status
+        // STATUS
         statusLabel = new JLabel("Status:");
         statusLabel.setForeground(Color.decode("#737373"));
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        statusLabel.setBounds(35, yPos, 130, 28);
+        statusLabel.setBounds(35, 470, 130, 28);
         viewWindow.add(statusLabel);
 
         statusValue = new JLabel(status);
@@ -224,83 +192,77 @@ public class ViewStudent{
         } else {
             statusValue.setForeground(Color.decode("#e53935"));
         }
-        statusValue.setBounds(175, yPos, 280, 28);
+        statusValue.setBounds(175, 470, 280, 28);
         viewWindow.add(statusValue);
-        yPos += lineHeight;
 
-        // Date Enrolled
+        // DATE ENROLLED
         lblDateEnrolled = new JLabel("Date Enrolled:");
         lblDateEnrolled.setForeground(Color.decode("#737373"));
         lblDateEnrolled.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblDateEnrolled.setBounds(35, yPos, 130, 28);
+        lblDateEnrolled.setBounds(35, 505, 130, 28);
         viewWindow.add(lblDateEnrolled);
 
         valDateEnrolled = new JLabel(dateEnrolled);
         valDateEnrolled.setForeground(Color.BLACK);
         valDateEnrolled.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        valDateEnrolled.setBounds(175, yPos, 280, 28);
+        valDateEnrolled.setBounds(175, 505, 280, 28);
         viewWindow.add(valDateEnrolled);
-        yPos += lineHeight;
 
-        // Separator for attendance section
+        // SEPARATOR
         JSeparator line2 = new JSeparator();
-        line2.setBounds(35, yPos, 430, 2);
+        line2.setBounds(35, 540, 430, 2);
         line2.setForeground(new Color(220, 220, 220));
         viewWindow.add(line2);
-        yPos += 15;
 
-        // Attendance Section Title
+        // ATTENDANCE SECTION TITLE
         JLabel attendanceTitle = new JLabel("Attendance Summary");
         attendanceTitle.setForeground(Color.decode("#1f87e2"));
         attendanceTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        attendanceTitle.setBounds(35, yPos, 300, 30);
+        attendanceTitle.setBounds(35, 555, 300, 30);
         viewWindow.add(attendanceTitle);
-        yPos += 40;
 
-        // Present
+        // PRESENT
         lblPresent = new JLabel("Present:");
         lblPresent.setForeground(Color.decode("#737373"));
         lblPresent.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblPresent.setBounds(35, yPos, 130, 28);
+        lblPresent.setBounds(35, 595, 130, 28);
         viewWindow.add(lblPresent);
 
         valPresent = new JLabel(String.valueOf(presentCount));
         valPresent.setForeground(Color.decode("#16a34a"));
         valPresent.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        valPresent.setBounds(175, yPos, 280, 28);
+        valPresent.setBounds(175, 595, 280, 28);
         viewWindow.add(valPresent);
-        yPos += lineHeight;
 
-        // Absences
+        // ABSENCES
         lblAbsences = new JLabel("Absences:");
         lblAbsences.setForeground(Color.decode("#737373"));
         lblAbsences.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblAbsences.setBounds(35, yPos, 130, 28);
+        lblAbsences.setBounds(35, 630, 130, 28);
         viewWindow.add(lblAbsences);
 
         valAbsences = new JLabel(String.valueOf(absentCount));
         valAbsences.setForeground(Color.decode("#e53935"));
         valAbsences.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        valAbsences.setBounds(175, yPos, 280, 28);
+        valAbsences.setBounds(175, 630, 280, 28);
         viewWindow.add(valAbsences);
-        yPos += lineHeight;
 
-        // Late
+        // LATE
         lblLate = new JLabel("Late:");
         lblLate.setForeground(Color.decode("#737373"));
         lblLate.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        lblLate.setBounds(35, yPos, 130, 28);
+        lblLate.setBounds(35, 665, 130, 28);
         viewWindow.add(lblLate);
 
         valLate = new JLabel(String.valueOf(lateCount));
         valLate.setForeground(Color.decode("#f39c12"));
         valLate.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        valLate.setBounds(175, yPos, 280, 28);
+        valLate.setBounds(175, 665, 280, 28);
         viewWindow.add(valLate);
 
-        // ===== CLOSE BUTTON =====
+        // CLOSE BUTTON
         closeButton = new JButton("Close");
-        closeButton.setBounds(175, yPos + 50, 150, 45);
+        closeButton.setBounds(175, 715, 150, 45);
         closeButton.setForeground(Color.WHITE);
         closeButton.setBackground(Color.decode("#1f87e2"));
         closeButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
