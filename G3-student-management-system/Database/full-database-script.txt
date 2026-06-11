@@ -1,0 +1,108 @@
+
+// Student Management System - Full Database Script
+// Group 3 | sms_db
+
+
+CREATE DATABASE sms_db;
+USE sms_db;
+
+
+==== TABLE: admin ====
+
+CREATE TABLE admin (
+    admin_id   INT AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL UNIQUE,
+    password   VARCHAR(100) NOT NULL
+);
+
+INSERT INTO admin (name, password) VALUES ('admin', 'admin123');
+
+==== TABLE: students ====
+
+CREATE TABLE students (
+    student_id      INT AUTO_INCREMENT PRIMARY KEY,
+    student_number  VARCHAR(20) UNIQUE,
+    first_name      VARCHAR(100) NOT NULL,
+    last_name       VARCHAR(100) NOT NULL,
+    email           VARCHAR(150) UNIQUE NOT NULL,
+    phone           VARCHAR(20),
+    address         TEXT,
+    program_section VARCHAR(50),
+    status          VARCHAR(30) DEFAULT 'Active',
+    photo_path      VARCHAR(255),
+    date_enrolled   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+==== TABLE: grades ====
+
+CREATE TABLE grades (
+    grade_id       INT AUTO_INCREMENT PRIMARY KEY,
+    student_id     INT,
+    student_number VARCHAR(20),
+    student_name   VARCHAR(200),
+    course_subject VARCHAR(100),
+    grade          DECIMAL(5,2) NOT NULL,
+    equivalent     VARCHAR(20),
+    semester       VARCHAR(30),
+    remarks        TEXT,
+    date_recorded  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL
+);
+
+
+==== TABLE: attendance ====
+
+CREATE TABLE attendance (
+    attendance_id  INT AUTO_INCREMENT PRIMARY KEY,
+    student_id     INT,
+    student_number VARCHAR(20),
+    student_name   VARCHAR(200),
+    course_subject VARCHAR(100),
+    status         VARCHAR(20) DEFAULT 'Present',
+    remarks        TEXT,
+    date_recorded  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL
+);
+
+==== TABLE: tasks (Dashboard - My Tasks) ====
+
+CREATE TABLE tasks (
+    task_id      INT AUTO_INCREMENT PRIMARY KEY,
+    task_name    VARCHAR(255) NOT NULL,
+    is_completed BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+==== TABLE: schedule  (Dashboard - Schedule panel) ====
+
+CREATE TABLE schedule (
+    schedule_id INT AUTO_INCREMENT PRIMARY KEY,
+    time_slot   VARCHAR(100) NOT NULL,
+    subject     VARCHAR(100) NOT NULL,
+    section     VARCHAR(100) NOT NULL,
+    room        VARCHAR(50)  NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+==== TRIGGER: Auto-generate student_number || Format: 2026-0001, 2026-0002 ==== 
+
+DELIMITER $$
+
+CREATE TRIGGER before_insert_student
+BEFORE INSERT ON students
+FOR EACH ROW
+BEGIN
+    DECLARE next_id INT;
+    DECLARE current_year CHAR(4);
+
+    SET current_year = YEAR(CURDATE());
+
+    SELECT AUTO_INCREMENT INTO next_id
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = 'sms_db'
+      AND TABLE_NAME   = 'students';
+
+    SET NEW.student_number = CONCAT(current_year, '-', LPAD(next_id, 4, '0'));
+END$$
+
+DELIMITER ;

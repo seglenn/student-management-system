@@ -7,11 +7,18 @@ import java.sql.*;
 
 public class HomePage extends JFrame {
 
+    // IMAGE ICONS
     ImageIcon imgSchool, imgGradient, imgGradientTwo, imgDashOne, imgDashTwo, imgPaper, imgLogoName;
+    
+    // LABELS
     JLabel imgDashDown, imgDashUp, imgBg, imgGradOne, imgPpr, imgGradTwo, lblWelcome, lblSignIn, lblUsername, lblPass, imgNameLogo, lblSms;
     JLabel lblCredentials;
+    
+    // INPUT FIELDS
     JTextField txtUsername;
     JPasswordField txtPass;
+    
+    // BUTTONS
     JButton btnStart;
 
     HomePage() {
@@ -21,24 +28,28 @@ public class HomePage extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
 
-        imgLogoName    = new ImageIcon("images/logo-name.png");
-        imgSchool      = new ImageIcon("images/school-bg.png");
-        imgGradient    = new ImageIcon("images/hp-gradient.png");
+        // LOAD IMAGES
+        imgLogoName = new ImageIcon("images/logo-name.png");
+        imgSchool = new ImageIcon("images/school-bg.png");
+        imgGradient = new ImageIcon("images/hp-gradient.png");
         imgGradientTwo = new ImageIcon("images/hp-gradient-two.png");
-        imgDashOne     = new ImageIcon("images/hp-dash-one.png");
-        imgDashTwo     = new ImageIcon("images/hp-dash-two.png");
-        imgPaper       = new ImageIcon("images/hp-paper.png");
+        imgDashOne = new ImageIcon("images/hp-dash-one.png");
+        imgDashTwo = new ImageIcon("images/hp-dash-two.png");
+        imgPaper = new ImageIcon("images/hp-paper.png");
 
+        // TITLE LABEL
         lblSms = new JLabel("Student Management System");
         lblSms.setBounds(66, 117, 426, 28);
         lblSms.setForeground(Color.decode("#b4b4b4"));
         lblSms.setFont(new Font("Segoe UI", Font.BOLD, 18));
         add(lblSms);
 
+        // LOGO IMAGE
         imgNameLogo = new JLabel(imgLogoName);
         imgNameLogo.setBounds(66, 52, 264, 65);
         add(imgNameLogo);
 
+        // DECORATIVE IMAGES
         imgDashDown = new JLabel(imgDashOne);
         imgDashDown.setBounds(885, 594, 419, 491);
         add(imgDashDown);
@@ -63,18 +74,21 @@ public class HomePage extends JFrame {
         imgGradTwo.setBounds(157, -741, 1194, 966);
         add(imgGradTwo);
 
+        // WELCOME MESSAGE
         lblWelcome = new JLabel("Welcome!");
         lblWelcome.setBounds(1240, 312, 141, 32);
         lblWelcome.setForeground(Color.black);
         lblWelcome.setFont(new Font("Arial", Font.BOLD, 30));
         add(lblWelcome);
 
+        // SIGN IN PROMPT
         lblSignIn = new JLabel("Sign In to access the system");
         lblSignIn.setBounds(1240, 347, 262, 22);
         lblSignIn.setForeground(Color.decode("#737373"));
         lblSignIn.setFont(new Font("Arial", Font.PLAIN, 20));
         add(lblSignIn);
 
+        // USERNAME FIELD
         lblUsername = new JLabel("Username");
         lblUsername.setBounds(1240, 413, 95, 22);
         lblUsername.setForeground(Color.black);
@@ -87,6 +101,7 @@ public class HomePage extends JFrame {
         txtUsername.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         add(txtUsername);
 
+        // PASSWORD FIELD
         lblPass = new JLabel("Password");
         lblPass.setBounds(1240, 521, 89, 22);
         lblPass.setForeground(Color.black);
@@ -99,6 +114,7 @@ public class HomePage extends JFrame {
         txtPass.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         add(txtPass);
 
+        // LOGIN BUTTON
         btnStart = new JButton("Start");
         btnStart.setBounds(1241, 628, 357, 60);
         btnStart.setFont(new Font("Segoe UI", Font.BOLD, 30));
@@ -108,61 +124,69 @@ public class HomePage extends JFrame {
         btnStart.setBorderPainted(false);
         add(btnStart);
 
-        // ── Default credentials hint shown below the Start button ──
+        // DEMO CREDENTIALS
         lblCredentials = new JLabel("Username: admin || Password: admin123");
         lblCredentials.setBounds(1271, 708, 357, 22);
         lblCredentials.setForeground(Color.DARK_GRAY);
         lblCredentials.setFont(new Font("Segoe UI", Font.ITALIC, 16));
         add(lblCredentials);
 
+        // LOGIN ACTION
         btnStart.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String userName = txtUsername.getText().trim();
                 String password = new String(txtPass.getPassword()).trim();
 
-                if (userName.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(null,
-                        "Please enter your username and password.",
-                        "Validation", JOptionPane.WARNING_MESSAGE);
+                // VALIDATE EMPTY USERNAME
+                if (userName.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Username is required. Please enter your username.", "Username Required", JOptionPane.WARNING_MESSAGE);
+                    txtUsername.requestFocus();
                     return;
                 }
 
-                try {
-                    Connection connection = (Connection) DriverManager.getConnection(
-                            "jdbc:mysql://localhost:3306/sms_db", "root", "");
+                // VALIDATE EMPTY PASSWORD
+                if (password.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Password is required. Please enter your password.", "Password Required", JOptionPane.WARNING_MESSAGE);
+                    txtPass.requestFocus();
+                    return;
+                }
 
-                    PreparedStatement st = (PreparedStatement) connection.prepareStatement(
-                            "SELECT name, password FROM admin WHERE name = ? AND password = ?");
+                // VALIDATE USERNAME LENGTH
+                if (userName.length() < 3) {
+                    JOptionPane.showMessageDialog(null, "Username must be at least 3 characters long.", "Invalid Username", JOptionPane.WARNING_MESSAGE);
+                    txtUsername.requestFocus();
+                    return;
+                }
+
+                // VALIDATE PASSWORD LENGTH
+                if (password.length() < 4) {
+                    JOptionPane.showMessageDialog(null, "Password must be at least 4 characters long.", "Invalid Password", JOptionPane.WARNING_MESSAGE);
+                    txtPass.requestFocus();
+                    return;
+                }
+
+                // AUTHENTICATE USER
+                try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+                     PreparedStatement st = connection.prepareStatement("SELECT name, password FROM admin WHERE name = ? AND password = ?")) {
+
                     st.setString(1, userName);
                     st.setString(2, password);
 
-                    ResultSet rs = st.executeQuery();
-
-                    if (rs.next()) {
-                        rs.close();
-                        st.close();
-                        connection.close();
-
-                        dispose();
-                        MainPage mainPage = new MainPage();
-                        mainPage.setVisible(true);
-                        JOptionPane.showMessageDialog(null, "You have successfully logged in.");
-
-                    } else {
-                        rs.close();
-                        st.close();
-                        connection.close();
-                        JOptionPane.showMessageDialog(null,
-                            "Wrong Username & Password.",
-                            "Login Failed", JOptionPane.ERROR_MESSAGE);
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next()) {
+                            dispose();
+                            MainPage mainPage = new MainPage();
+                            mainPage.setVisible(true);
+                            JOptionPane.showMessageDialog(null, "You have successfully logged in.");
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Invalid username or password. Please try again.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
 
                 } catch (SQLException sqlException) {
                     sqlException.printStackTrace();
-                    JOptionPane.showMessageDialog(null,
-                        "Database error: " + sqlException.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Database error: " + sqlException.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

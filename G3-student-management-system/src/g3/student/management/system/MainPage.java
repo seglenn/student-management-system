@@ -5,37 +5,42 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class MainPage extends JFrame {
-    
-    private JLabel lblLogoName, lblLine; 
+
+    private JLabel lblLogoName, lblLine;
     private JButton btnDashboard, btnStuds, btnGrades, btnAttendance, btnLogout, selectedButton;
     private JPanel sideBarPanel, contentPanel;
     private CardLayout cardLayout;
     private ImageIcon logoAndName, Line;
-    
+
     MainPage() {
-        
+
         setLayout(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Student Management System - Group 3");
-        
+
+        // SIDEBAR SETUP
         sideBarPanel = new JPanel();
         sideBarPanel.setBounds(0, 0, 353, 1080);
         sideBarPanel.setBackground(Color.decode("#202c3c"));
         sideBarPanel.setLayout(null);
         add(sideBarPanel);
-        
+
+        // LOAD IMAGES
         logoAndName = new ImageIcon("images/logo-and-name.png");
         Line = new ImageIcon("images/line.png");
-        
+
+        // LOGO DISPLAY
         lblLogoName = new JLabel(logoAndName);
         lblLogoName.setBounds(50, 37, 277, 55);
         sideBarPanel.add(lblLogoName);
-        
+
+        // DECORATIVE LINE
         lblLine = new JLabel(Line);
         lblLine.setBounds(42, 57, 277, 112);
         sideBarPanel.add(lblLine);
-        
+               
+        // NAVIGATION BUTTONS
         btnDashboard = new JButton("Dashboard");
         btnDashboard.setBounds(41, 142, 277, 60);
         btnDashboard.setForeground(Color.decode("#b4b4b4"));
@@ -44,7 +49,7 @@ public class MainPage extends JFrame {
         btnDashboard.setFocusPainted(false);
         btnDashboard.setBorderPainted(false);
         sideBarPanel.add(btnDashboard);
-        
+
         btnStuds = new JButton("Students");
         btnStuds.setBounds(41, 212, 277, 60);
         btnStuds.setForeground(Color.decode("#b4b4b4"));
@@ -53,7 +58,7 @@ public class MainPage extends JFrame {
         btnStuds.setFocusPainted(false);
         btnStuds.setBorderPainted(false);
         sideBarPanel.add(btnStuds);
-        
+
         btnGrades = new JButton("Grades");
         btnGrades.setBounds(41, 282, 277, 60);
         btnGrades.setForeground(Color.decode("#b4b4b4"));
@@ -62,7 +67,7 @@ public class MainPage extends JFrame {
         btnGrades.setFocusPainted(false);
         btnGrades.setBorderPainted(false);
         sideBarPanel.add(btnGrades);
-        
+
         btnAttendance = new JButton("Attendance");
         btnAttendance.setBounds(41, 352, 277, 60);
         btnAttendance.setForeground(Color.decode("#b4b4b4"));
@@ -72,7 +77,7 @@ public class MainPage extends JFrame {
         btnAttendance.setBorderPainted(false);
         sideBarPanel.add(btnAttendance);
 
-        // ── Logout button — pinned to bottom of sidebar ───────────
+        // LOGOUT BUTTON
         btnLogout = new JButton("Logout");
         btnLogout.setBounds(41, 930, 277, 60);
         btnLogout.setForeground(Color.WHITE);
@@ -82,15 +87,16 @@ public class MainPage extends JFrame {
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
         sideBarPanel.add(btnLogout);
-        
+
+        // SET DEFAULT ACTIVE BUTTON
         selectedButton = btnDashboard;
-        selectedButton.setBackground(new Color(52, 152, 219));
-        selectedButton.setForeground(Color.WHITE);
-        
-        // Hover effect only on nav buttons, not logout
+        applyActive(btnDashboard);
+
+        // HOVER EFFECTS
         JButton[] navButtons = {btnDashboard, btnStuds, btnGrades, btnAttendance};
         
         for (JButton button : navButtons) {
+            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
             button.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -110,28 +116,36 @@ public class MainPage extends JFrame {
                 }
             });
         }
-        
+
+        // CONTENT PANEL (CARD LAYOUT)
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         contentPanel.setBounds(350, 0, 1570, 1084);
         contentPanel.setBackground(Color.decode("#f6f7f9"));
         add(contentPanel);
-        
-        DashboardPanel dashboardPanel   = new DashboardPanel();
-        GradesPanel gradesPanel         = new GradesPanel();
+
+        // CREATE PANEL INSTANCES
+        DashboardPanel dashboardPanel = new DashboardPanel();
+        GradesPanel gradesPanel = new GradesPanel();
         AttendancePanel attendancePanel = new AttendancePanel();
-        StudentsPanel studentsPanel     = new StudentsPanel();
-        
+        StudentsPanel studentsPanel = new StudentsPanel();
+
+        // LINK PANELS (FOR DATA SHARING)
         studentsPanel.setGradesPanel(gradesPanel);
         studentsPanel.setAttendancePanel(attendancePanel);
-        
-        contentPanel.add(dashboardPanel,  "Dashboard");
-        contentPanel.add(studentsPanel,   "Students");
-        contentPanel.add(gradesPanel,     "Grades");
+        studentsPanel.setDashboardPanel(dashboardPanel);
+        attendancePanel.setDashboardPanel(dashboardPanel);
+
+        // ADD PANELS TO CARD LAYOUT
+        contentPanel.add(dashboardPanel, "Dashboard");
+        contentPanel.add(studentsPanel, "Students");
+        contentPanel.add(gradesPanel, "Grades");
         contentPanel.add(attendancePanel, "Attendance");
-        
+
+        // SHOW DASHBOARD BY DEFAULT
         cardLayout.show(contentPanel, "Dashboard");
-        
+
+        // DASHBOARD BUTTON ACTION
         btnDashboard.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -140,7 +154,8 @@ public class MainPage extends JFrame {
                 dashboardPanel.refreshStats();
             }
         });
-        
+
+        // STUDENTS BUTTON ACTION
         btnStuds.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -148,7 +163,8 @@ public class MainPage extends JFrame {
                 setSelectedButton(btnStuds);
             }
         });
-        
+
+        // GRADES BUTTON ACTION
         btnGrades.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -156,7 +172,8 @@ public class MainPage extends JFrame {
                 setSelectedButton(btnGrades);
             }
         });
-        
+
+        // ATTENDANCE BUTTON ACTION
         btnAttendance.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -165,35 +182,46 @@ public class MainPage extends JFrame {
             }
         });
 
-        // ── Logout action ─────────────────────────────────────────
+        // LOGOUT BUTTON ACTION
         btnLogout.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        MainPage.this,
-                        "Are you sure you want to logout?",
-                        "Confirm Logout",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
+                int confirm = JOptionPane.showConfirmDialog(MainPage.this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                 if (confirm == JOptionPane.YES_OPTION) {
                     dispose();
                     HomePage homePage = new HomePage();
                     homePage.setVisible(true);
+                    JOptionPane.showMessageDialog(null, "You have been successfully logged out.", "Logout Successful", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    System.out.println("Logout cancelled");
                 }
             }
         });
         
         setVisible(true);
     }
-    
+
+    // APPLY ACTIVE BUTTON STYLE
+    private void applyActive(JButton button) {
+        button.setBackground(new Color(52, 152, 219));
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 25));
+    }
+
+    // APPLY INACTIVE BUTTON STYLE
+    private void applyInactive(JButton button) {
+        button.setBackground(Color.decode("#202c3c"));
+        button.setForeground(Color.decode("#b4b4b4"));
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 25));
+    }
+
+    // UPDATE SELECTED BUTTON
     public void setSelectedButton(JButton clicked) {
         if (selectedButton != null) {
-            selectedButton.setBackground(Color.decode("#202c3c"));
-            selectedButton.setForeground(Color.decode("#b4b4b4"));
+            applyInactive(selectedButton);
         }
         selectedButton = clicked;
-        selectedButton.setBackground(new Color(52, 152, 219));
-        selectedButton.setForeground(Color.WHITE);
+        applyActive(selectedButton);
     }
 }

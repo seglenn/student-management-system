@@ -1,11 +1,7 @@
 package g3.student.management.system;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Dimension;
-import java.awt.Cursor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -13,14 +9,14 @@ import java.util.ArrayList;
 
 public class DashboardPanel extends JPanel implements ActionListener {
 
-    // ===== FIELDS =====
+    // FIELDS
     private JLabel lblTitle, lblSubtxt, imgDisplay, lblStudIcon;
     private JLabel lblAttIcon, lblTaskIcon, lblProgressPercent;
     private JLabel lblTotalStud, lblAttRate, lblTaskProg, lblAttendanceRate, lblNoStuds;
     private JPanel pnlStud, pnlAtt, pnlTask;
     private ImageIcon imgDashOne, imgStudIcon, imgAttIcon, imgTaskIcon;
 
-    // Task panel
+    // TASK PANEL
     private DefaultListModel<String> listModel;
     private JList<String> taskList;
     private JScrollPane taskScrollPane;
@@ -29,7 +25,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
     private JTextField tfTaskInput;
     private JPanel taskPanel;
 
-    // Schedule panel
+    // SCHEDULE PANEL
     private JTable scheduleTable;
     private DefaultTableModel scheduleModel;
     private JScrollPane scheduleScrollPane;
@@ -43,12 +39,12 @@ public class DashboardPanel extends JPanel implements ActionListener {
         taskIds = new ArrayList<>();
         listModel = new DefaultListModel<>();
 
-        // ===== LOAD IMAGES =====
+        // LOAD IMAGES
         imgStudIcon = new ImageIcon("images/student-icon.png");
         imgAttIcon = new ImageIcon("images/att-icon.png");
         imgTaskIcon = new ImageIcon("images/task-icon.png");
 
-        // ===== ICON LABELS =====
+        // ICON LABELS
         lblStudIcon = new JLabel(imgStudIcon);
         lblStudIcon.setBounds(385, 250, 89, 78);
         add(lblStudIcon);
@@ -61,20 +57,21 @@ public class DashboardPanel extends JPanel implements ActionListener {
         lblTaskIcon.setBounds(1403, 254, 77, 84);
         add(lblTaskIcon);
 
-        // ===== TITLE =====
+        // TITLE
         lblTitle = new JLabel("Dashboard");
         lblTitle.setBounds(45, 87, 230, 47);
         lblTitle.setForeground(Color.BLACK);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 30));
         add(lblTitle);
 
+        // SUBTITLE
         lblSubtxt = new JLabel("Overview");
         lblSubtxt.setBounds(45, 137, 104, 27);
         lblSubtxt.setForeground(Color.decode("#737373"));
         lblSubtxt.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         add(lblSubtxt);
 
-        // ===== STATS NUMBERS =====
+        // STATS NUMBERS
         lblNoStuds = new JLabel("0");
         lblNoStuds.setBounds(67, 262, 197, 75);
         lblNoStuds.setFont(new Font("Segoe UI", Font.BOLD, 53));
@@ -88,12 +85,12 @@ public class DashboardPanel extends JPanel implements ActionListener {
         add(lblAttendanceRate);
 
         lblProgressPercent = new JLabel("0");
-        lblProgressPercent.setBounds(1079, 262, 197, 75);
+        lblProgressPercent.setBounds(1079, 262, 297, 75);
         lblProgressPercent.setFont(new Font("Segoe UI", Font.BOLD, 53));
         lblProgressPercent.setForeground(Color.decode("#16a55d"));
         add(lblProgressPercent);
 
-        // ===== STATS LABELS =====
+        // STATS LABELS
         lblTotalStud = new JLabel("TOTAL STUDENTS");
         lblTotalStud.setBounds(69, 227, 183, 27);
         lblTotalStud.setFont(new Font("Segoe UI", Font.PLAIN, 17));
@@ -112,7 +109,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
         lblTaskProg.setForeground(Color.decode("#737373"));
         add(lblTaskProg);
 
-        // ===== CARD PANELS =====
+        // CARD PANELS
         pnlStud = new JPanel();
         pnlStud.setBounds(43, 203, 464, 168);
         pnlStud.setBackground(Color.WHITE);
@@ -131,26 +128,25 @@ public class DashboardPanel extends JPanel implements ActionListener {
         pnlTask.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         add(pnlTask);
 
-        // ===== TASK PANEL (left, below stats) =====
+        // TASK PANEL
         setupTaskPanel();
 
-        // ===== SCHEDULE PANEL (right, below stats) =====
+        // SCHEDULE PANEL
         setupSchedulePanel();
 
-        // ===== DECORATIVE IMAGE =====
+        // DECORATIVE IMAGE
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
         imgDisplay = new JLabel(imgDashOne);
         imgDisplay.setBounds(1153, 589, 417, 491);
         add(imgDisplay);
 
+        // LOAD DATA
         loadTasksFromDB();
         loadScheduleFromDB();
         refreshStats();
     }
 
-    // =========================================================
-    //  TASK PANEL  (left column, y=410, height=490)
-    // =========================================================
+    // TASK PANEL SETUP
     private void setupTaskPanel() {
         taskPanel = new JPanel();
         taskPanel.setLayout(null);
@@ -159,12 +155,14 @@ public class DashboardPanel extends JPanel implements ActionListener {
         taskPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         add(taskPanel);
 
+        // TITLE
         JLabel titleLabel = new JLabel("MY TASKS:");
         titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         titleLabel.setForeground(Color.decode("#737373"));
         titleLabel.setBounds(25, 15, 200, 25);
         taskPanel.add(titleLabel);
 
+        // BUTTONS
         btnAdd = new JButton("Add");
         btnAdd.setBounds(25, 60, 100, 40);
         btnAdd.setBackground(new Color(26, 115, 232));
@@ -192,43 +190,43 @@ public class DashboardPanel extends JPanel implements ActionListener {
         btnClear.addActionListener(this);
         taskPanel.add(btnClear);
 
+        // INPUT FIELD
         tfTaskInput = new JTextField();
         tfTaskInput.setBounds(140, 60, 390, 40);
         tfTaskInput.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         tfTaskInput.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         taskPanel.add(tfTaskInput);
 
+        // TASK LIST
         taskList = new JList<>(listModel);
         taskList.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         taskList.setSelectionBackground(new Color(26, 115, 232));
         taskList.setSelectionForeground(Color.WHITE);
 
+        // SCROLL PANE
         taskScrollPane = new JScrollPane(taskList);
         taskScrollPane.setBounds(140, 115, 390, 350);
         taskScrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         taskPanel.add(taskScrollPane);
     }
 
-    // =========================================================
-    //  SCHEDULE PANEL  (right column, y=410, height=490)
-    //  Same button layout as task panel; table rows are editable
-    // =========================================================
+    // SCHEDULE PANEL SETUP
     private void setupSchedulePanel() {
         schedulePanel = new JPanel();
         schedulePanel.setLayout(null);
-        // Sits to the right of the task panel with a small gap
         schedulePanel.setBounds(630, 410, 860, 490);
         schedulePanel.setBackground(Color.WHITE);
         schedulePanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         add(schedulePanel);
 
+        // TITLE
         JLabel titleLabel = new JLabel("SCHEDULE:");
         titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         titleLabel.setForeground(Color.decode("#737373"));
         titleLabel.setBounds(25, 15, 200, 25);
         schedulePanel.add(titleLabel);
 
-        // --- Buttons (same style as task panel) ---
+        // BUTTONS
         btnSchedAdd = new JButton("Add");
         btnSchedAdd.setBounds(25, 60, 100, 40);
         btnSchedAdd.setBackground(new Color(26, 115, 232));
@@ -256,12 +254,12 @@ public class DashboardPanel extends JPanel implements ActionListener {
         btnSchedSave.addActionListener(this);
         schedulePanel.add(btnSchedSave);
 
-        // --- Editable schedule table ---
+        // TABLE COLUMNS
         String[] cols = {"Time", "Subject", "Section", "Room"};
         scheduleModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                return true; // all cells editable
+                return true;
             }
         };
 
@@ -272,42 +270,34 @@ public class DashboardPanel extends JPanel implements ActionListener {
         scheduleTable.setSelectionForeground(Color.WHITE);
         scheduleTable.setGridColor(Color.decode("#e0e0e0"));
 
+        // TABLE HEADER
         JTableHeader header = scheduleTable.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 15));
         header.setBackground(Color.decode("#1f87e2"));
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
 
+        // SCROLL PANE
         scheduleScrollPane = new JScrollPane(scheduleTable);
-        // Starts at x=140 (right of buttons), same as task list
         scheduleScrollPane.setBounds(140, 60, 695, 405);
         scheduleScrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         schedulePanel.add(scheduleScrollPane);
     }
 
-    // =========================================================
-    //  DATABASE — TASKS
-    // =========================================================
+    // LOAD TASKS FROM DATABASE
     private void loadTasksFromDB() {
         listModel.clear();
         taskIds.clear();
 
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
-
-            PreparedStatement ps = conn.prepareStatement(
-                    "SELECT task_id, task_name FROM tasks WHERE is_completed = FALSE ORDER BY created_at DESC");
-            ResultSet rs = ps.executeQuery();
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             PreparedStatement ps = conn.prepareStatement("SELECT task_id, task_name FROM tasks WHERE is_completed = FALSE ORDER BY created_at DESC");
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 taskIds.add(String.valueOf(rs.getInt("task_id")));
                 listModel.addElement(rs.getString("task_name"));
             }
 
-            rs.close();
-            ps.close();
-            conn.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -315,25 +305,21 @@ public class DashboardPanel extends JPanel implements ActionListener {
         updateProgress();
     }
 
+    // ADD TASK TO DATABASE
     private void addTaskToDB(String task) {
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             PreparedStatement ps = conn.prepareStatement("INSERT INTO tasks (task_name) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO tasks (task_name) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, task);
             ps.executeUpdate();
 
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                taskIds.add(String.valueOf(rs.getInt(1)));
-                listModel.addElement(task);
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    taskIds.add(String.valueOf(rs.getInt(1)));
+                    listModel.addElement(task);
+                }
             }
 
-            rs.close();
-            ps.close();
-            conn.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -341,25 +327,21 @@ public class DashboardPanel extends JPanel implements ActionListener {
         updateProgress();
     }
 
+    // DELETE TASK FROM DATABASE
     private void deleteTaskFromDB(int index) {
         if (index < 0 || index >= taskIds.size()) {
             return;
         }
 
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM tasks WHERE task_id = ?")) {
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "DELETE FROM tasks WHERE task_id = ?");
             ps.setInt(1, Integer.parseInt(taskIds.get(index)));
             ps.executeUpdate();
 
-            ps.close();
-            conn.close();
-
             taskIds.remove(index);
             listModel.removeElementAt(index);
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -367,26 +349,23 @@ public class DashboardPanel extends JPanel implements ActionListener {
         updateProgress();
     }
 
+    // CLEAR ALL TASKS
     private void clearAllTasksFromDB() {
         if (taskIds.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No tasks to clear.", "Empty", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to clear all tasks?",
-                "Confirm Clear", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to clear all tasks?", "Confirm Clear", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/sms_db", "root", "");
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+                 Statement stmt = conn.createStatement()) {
 
-                conn.prepareStatement("DELETE FROM tasks").executeUpdate();
-                conn.close();
-
+                stmt.executeUpdate("DELETE FROM tasks");
                 taskIds.clear();
                 listModel.clear();
+
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -395,9 +374,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
         updateProgress();
     }
 
-    // =========================================================
-    //  DATABASE — SCHEDULE
-    // =========================================================
+    // LOAD SCHEDULE FROM DATABASE
     private void loadScheduleFromDB() {
         scheduleModel.setRowCount(0);
 
@@ -405,17 +382,16 @@ public class DashboardPanel extends JPanel implements ActionListener {
             Connection conn = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/sms_db", "root", "");
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "SELECT time_slot, subject, section, room FROM schedule ORDER BY schedule_id");
+            String sql = "SELECT time_slot, subject, section, room FROM schedule ORDER BY schedule_id";
+            PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                scheduleModel.addRow(new Object[]{
-                    rs.getString("time_slot"),
-                    rs.getString("subject"),
-                    rs.getString("section"),
-                    rs.getString("room")
-                });
+                String timeSlot = rs.getString("time_slot");
+                String subject = rs.getString("subject");
+                String section = rs.getString("section");
+                String room = rs.getString("room");
+                scheduleModel.addRow(new Object[]{timeSlot, subject, section, room});
             }
 
             rs.close();
@@ -425,30 +401,22 @@ public class DashboardPanel extends JPanel implements ActionListener {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-
-        // Fallback sample rows if table is empty
-        if (scheduleModel.getRowCount() == 0) {
-            scheduleModel.addRow(new Object[]{"8:00 AM - 10:30 AM", "History", "Section A", "403"});
-            scheduleModel.addRow(new Object[]{"10:30 AM - 12:30 PM", "English", "Section B", "101"});
-            scheduleModel.addRow(new Object[]{"2:00 PM - 4:30 PM", "Math", "Section C", "202"});
-        }
     }
 
+    // SAVE SCHEDULE TO DATABASE
     private void saveScheduleToDB() {
-        // Stop any active cell editing before saving
         if (scheduleTable.isEditing()) {
             scheduleTable.getCellEditor().stopCellEditing();
         }
 
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             Statement stmt = conn.createStatement();
+             PreparedStatement ps = conn.prepareStatement("INSERT INTO schedule (time_slot, subject, section, room) VALUES (?, ?, ?, ?)")) {
 
-            conn.prepareStatement("DELETE FROM schedule").executeUpdate();
+            // CLEAR EXISTING
+            stmt.executeUpdate("DELETE FROM schedule");
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO schedule (time_slot, subject, section, room) VALUES (?, ?, ?, ?)");
-
+            // INSERT CURRENT
             for (int i = 0; i < scheduleModel.getRowCount(); i++) {
                 ps.setString(1, String.valueOf(scheduleModel.getValueAt(i, 0)));
                 ps.setString(2, String.valueOf(scheduleModel.getValueAt(i, 1)));
@@ -458,9 +426,6 @@ public class DashboardPanel extends JPanel implements ActionListener {
             }
 
             ps.executeBatch();
-            ps.close();
-            conn.close();
-
             JOptionPane.showMessageDialog(this, "Schedule saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (SQLException ex) {
@@ -469,35 +434,26 @@ public class DashboardPanel extends JPanel implements ActionListener {
         }
     }
 
-    // =========================================================
-    //  STATS
-    // =========================================================
+    // REFRESH STATISTICS
     public void refreshStats() {
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "")) {
 
-            // Total students
-            ResultSet rs = conn.prepareStatement(
-                    "SELECT COUNT(*) AS total FROM students").executeQuery();
-            if (rs.next()) {
-                lblNoStuds.setText(String.valueOf(rs.getInt("total")));
+            // TOTAL STUDENTS
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS total FROM students")) {
+                if (rs.next()) {
+                    lblNoStuds.setText(String.valueOf(rs.getInt("total")));
+                }
             }
-            rs.close();
 
-            // Attendance rate
-            rs = conn.prepareStatement(
-                    "SELECT COUNT(*) AS total, "
-                    + "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present "
-                    + "FROM attendance").executeQuery();
-            if (rs.next()) {
-                int total = rs.getInt("total");
-                int present = rs.getInt("present");
-                lblAttendanceRate.setText(total > 0 ? (present * 100 / total) + "%" : "0%");
+            // ATTENDANCE RATE
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS total, SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present FROM attendance")) {
+                if (rs.next()) {
+                    int total = rs.getInt("total");
+                    int present = rs.getInt("present");
+                    lblAttendanceRate.setText(total > 0 ? (present * 100 / total) + "%" : "0%");
+                }
             }
-            rs.close();
 
-            conn.close();
         } catch (SQLException ex) {
             ex.printStackTrace();
             lblNoStuds.setText("0");
@@ -505,18 +461,17 @@ public class DashboardPanel extends JPanel implements ActionListener {
         }
     }
 
+    // UPDATE TASK PROGRESS
     private void updateProgress() {
         int total = listModel.getSize();
-        lblProgressPercent.setText(total == 0 ? "0" : total + " tasks");
+        lblProgressPercent.setText(total == 0 ? "0" : total + " pending");
     }
 
-    // =========================================================
-    //  ACTION PERFORMED
-    // =========================================================
+    // BUTTON ACTIONS
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        // --- Task buttons ---
+        // ADD TASK
         if (e.getSource() == btnAdd) {
             String task = tfTaskInput.getText().trim();
             if (!task.isEmpty()) {
@@ -526,6 +481,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Please enter a task.", "No Input", JOptionPane.ERROR_MESSAGE);
             }
 
+        // DELETE TASK
         } else if (e.getSource() == btnDelete) {
             int idx = taskList.getSelectedIndex();
             if (idx != -1) {
@@ -534,17 +490,18 @@ public class DashboardPanel extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Please select a task to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
             }
 
+        // CLEAR ALL TASKS
         } else if (e.getSource() == btnClear) {
             clearAllTasksFromDB();
 
-            // --- Schedule buttons ---
+        // ADD SCHEDULE ROW
         } else if (e.getSource() == btnSchedAdd) {
             scheduleModel.addRow(new Object[]{"e.g. 8:00 AM - 10:00 AM", "Subject", "Section", "Room"});
-            // Scroll to and start editing the new row
             int newRow = scheduleModel.getRowCount() - 1;
             scheduleTable.scrollRectToVisible(scheduleTable.getCellRect(newRow, 0, true));
             scheduleTable.editCellAt(newRow, 0);
 
+        // DELETE SCHEDULE ROW
         } else if (e.getSource() == btnSchedDelete) {
             int selectedRow = scheduleTable.getSelectedRow();
             if (selectedRow != -1) {
@@ -553,6 +510,7 @@ public class DashboardPanel extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Please select a row to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
             }
 
+        // SAVE SCHEDULE
         } else if (e.getSource() == btnSchedSave) {
             saveScheduleToDB();
         }

@@ -5,11 +5,13 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class GradesPanel extends JPanel {
 
     JLabel lblTitle, lblSubtxt, imgDisplay;
-    JButton btnAddGrade;
+    JButton btnAddGrade, btnSaveGrade, btnDeleteGrade;
     ImageIcon imgDashOne;
     private JTable gradeTable;
     private DefaultTableModel tableModel;
@@ -17,9 +19,10 @@ public class GradesPanel extends JPanel {
     private boolean isOpen = false;
 
     private JComboBox<String> cmbStudent;
-    private java.util.List<Integer> studentIds = new java.util.ArrayList<>();
-    private java.util.List<String> studentNumbers = new java.util.ArrayList<>();
-    private java.util.List<String> studentNames   = new java.util.ArrayList<>();
+    private List<Integer> studentIds = new ArrayList<>();
+    private List<String> studentNumbers = new ArrayList<>();
+    private List<String> studentNames = new ArrayList<>();
+    private List<Integer> gradeIds = new ArrayList<>();
 
     GradesPanel() {
         setLayout(null);
@@ -36,8 +39,9 @@ public class GradesPanel extends JPanel {
         lblSubtxt.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         add(lblSubtxt);
 
-        btnAddGrade = new JButton("Add grade");
-        btnAddGrade.setBounds(1273, 104, 230, 61);
+        // BUTTONS
+        btnAddGrade = new JButton("Add Grade");
+        btnAddGrade.setBounds(743, 104, 230, 61);
         btnAddGrade.setBackground(Color.decode("#1f87e2"));
         btnAddGrade.setFont(new Font("Segoe UI", Font.BOLD, 17));
         btnAddGrade.setForeground(Color.WHITE);
@@ -45,10 +49,34 @@ public class GradesPanel extends JPanel {
         btnAddGrade.setCursor(new Cursor(Cursor.HAND_CURSOR));
         add(btnAddGrade);
 
-        String[] columns = {"Student No.", "Name", "Course/Subject", "Grade", "Equivalent", "Semester", "Remarks"};
-        tableModel = new DefaultTableModel(columns, 0);
-        gradeTable = new JTable(tableModel);
+        btnSaveGrade = new JButton("Save Changes");
+        btnSaveGrade.setBounds(1003, 104, 230, 61);
+        btnSaveGrade.setBackground(new Color(22, 163, 74));
+        btnSaveGrade.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        btnSaveGrade.setForeground(Color.WHITE);
+        btnSaveGrade.setFocusPainted(false);
+        btnSaveGrade.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        add(btnSaveGrade);
 
+        btnDeleteGrade = new JButton("Delete Grade");
+        btnDeleteGrade.setBounds(1263, 104, 230, 61);
+        btnDeleteGrade.setBackground(Color.decode("#e53935"));
+        btnDeleteGrade.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        btnDeleteGrade.setForeground(Color.WHITE);
+        btnDeleteGrade.setFocusPainted(false);
+        btnDeleteGrade.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        add(btnDeleteGrade);
+
+        // TABLE COLUMNS
+        String[] columns = {"Student No.", "Name", "Course/Subject", "Grade", "Status", "Semester", "Remarks"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return col != 0 && col != 1 && col != 4;
+            }
+        };
+
+        gradeTable = new JTable(tableModel);
         gradeTable.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         gradeTable.setRowHeight(45);
         gradeTable.setSelectionBackground(Color.decode("#e3f2fd"));
@@ -60,6 +88,22 @@ public class GradesPanel extends JPanel {
         header.setForeground(Color.WHITE);
         header.setPreferredSize(new Dimension(header.getPreferredSize().width, 50));
 
+        // Auto-update Status when Grade is edited
+        tableModel.addTableModelListener(e -> {
+            if (e.getColumn() == 3) {
+                int row = e.getFirstRow();
+                Object gradeVal = tableModel.getValueAt(row, 3);
+                if (gradeVal != null) {
+                    try {
+                        double g = Double.parseDouble(gradeVal.toString().trim());
+                        tableModel.setValueAt(g >= 75 ? "Passed" : "Failed", row, 4);
+                    } catch (NumberFormatException ex) {
+                        tableModel.setValueAt("", row, 4);
+                    }
+                }
+            }
+        });
+
         scrollPane = new JScrollPane(gradeTable);
         scrollPane.setBounds(45, 200, 1450, 650);
         add(scrollPane);
@@ -67,7 +111,7 @@ public class GradesPanel extends JPanel {
         cmbStudent = new JComboBox<>();
 
         loadGradesFromDB();
-        setupAddButtonListener();
+        setupButtonListeners();
 
         imgDashOne = new ImageIcon("images/hp-dash-one-v2.png");
         imgDisplay = new JLabel(imgDashOne);
@@ -75,42 +119,165 @@ public class GradesPanel extends JPanel {
         add(imgDisplay);
     }
 
-    // Read student_number and student_name directly from grades table — no JOIN needed
+    // COMPUTE STATUS FROM GRADE
+    private String computeEquivalent(String gradeStr) {
+        try {
+            double g = Double.parseDouble(gradeStr.trim());
+            return g >= 75 ? "Passed" : "Failed";
+        } catch (NumberFormatException ex) {
+            return "";
+        }
+    }
+
+    // LOAD GRADES FROM DATABASE
     public void loadGradesFromDB() {
         tableModel.setRowCount(0);
+        gradeIds.clear();
 
-        try {
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
-
-            // student_number and student_name are stored directly in grades row at insert time
-            String sql = "SELECT student_number, student_name, course_subject, " +
-                         "grade, equivalent, semester, remarks " +
-                         "FROM grades ORDER BY date_recorded DESC";
-
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             PreparedStatement ps = conn.prepareStatement("SELECT grade_id, student_number, student_name, course_subject, grade, equivalent, semester, remarks FROM grades ORDER BY date_recorded DESC");
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
+                gradeIds.add(rs.getInt("grade_id"));
+                String gradeVal = rs.getString("grade");
+                String equivalent = computeEquivalent(gradeVal != null ? gradeVal : "");
                 tableModel.addRow(new Object[]{
                     rs.getString("student_number"),
                     rs.getString("student_name"),
                     rs.getString("course_subject"),
-                    rs.getString("grade"),
-                    rs.getString("equivalent"),
+                    gradeVal,
+                    equivalent,
                     rs.getString("semester"),
                     rs.getString("remarks")
                 });
             }
-
-            rs.close(); ps.close(); conn.close();
 
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    // Loads student_id, student_number, and full name into parallel lists
+    // SAVE GRADES TO DATABASE
+    private void saveGradesToDB() {
+        if (gradeTable.isEditing()) {
+            gradeTable.getCellEditor().stopCellEditing();
+        }
+
+        int successCount = 0;
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+            conn.setAutoCommit(false);
+
+            String sql = "UPDATE grades SET course_subject = ?, grade = ?, equivalent = ?, semester = ?, remarks = ? WHERE grade_id = ?";
+            ps = conn.prepareStatement(sql);
+
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (i >= gradeIds.size()) continue;
+
+                String course = String.valueOf(tableModel.getValueAt(i, 2));
+                String gradeValue = String.valueOf(tableModel.getValueAt(i, 3));
+                String semester = String.valueOf(tableModel.getValueAt(i, 5));
+                String remarks = String.valueOf(tableModel.getValueAt(i, 6));
+                int gradeId = gradeIds.get(i);
+
+                double gradeNum;
+                try {
+                    gradeNum = Double.parseDouble(gradeValue);
+                    if (gradeNum < 0 || gradeNum > 100) {
+                        JOptionPane.showMessageDialog(this, "Row " + (i + 1) + ": Grade must be between 0 and 100.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                        conn.rollback();
+                        return;
+                    }
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(this, "Row " + (i + 1) + ": Grade must be a valid number.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                    conn.rollback();
+                    return;
+                }
+
+                String equivalent = gradeNum >= 75 ? "Passed" : "Failed";
+                tableModel.setValueAt(equivalent, i, 4);
+
+                ps.setString(1, course);
+                ps.setBigDecimal(2, new java.math.BigDecimal(gradeValue));
+                ps.setString(3, equivalent);
+                ps.setString(4, semester);
+                ps.setString(5, remarks);
+                ps.setInt(6, gradeId);
+                ps.addBatch();
+                successCount++;
+            }
+
+            if (successCount > 0) {
+                ps.executeBatch();
+                conn.commit();
+                JOptionPane.showMessageDialog(this, successCount + " grade record(s) saved successfully!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "No changes to save.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            JOptionPane.showMessageDialog(this, "Error saving grades: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            
+        } finally {
+            try {
+                if (ps != null) ps.close();
+                if (conn != null) { conn.setAutoCommit(true); conn.close(); }
+            } catch (SQLException closeEx) {
+                closeEx.printStackTrace();
+            }
+        }
+    }
+
+    // DELETE SELECTED GRADE
+    private void deleteSelectedGrade() {
+        int selectedRow = gradeTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a row to delete.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Delete this grade record?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        if (selectedRow < gradeIds.size()) {
+            int gradeId = gradeIds.get(selectedRow);
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+                 PreparedStatement ps = conn.prepareStatement("DELETE FROM grades WHERE grade_id = ?")) {
+
+                ps.setInt(1, gradeId);
+                ps.executeUpdate();
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error deleting grade: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        gradeIds.remove(selectedRow);
+        tableModel.removeRow(selectedRow);
+    }
+
+    // BUTTON LISTENERS
+    private void setupButtonListeners() {
+        btnAddGrade.addActionListener(e -> {
+            if (!isOpen) openAddGradeDialog();
+        });
+        btnSaveGrade.addActionListener(e -> saveGradesToDB());
+        btnDeleteGrade.addActionListener(e -> deleteSelectedGrade());
+    }
+
+    // STUDENT DROPDOWN
     public void loadStudentDropdown() {
         cmbStudent.removeAllItems();
         studentIds.clear();
@@ -122,17 +289,12 @@ public class GradesPanel extends JPanel {
         studentNumbers.add("");
         studentNames.add("");
 
-        try {
-            Connection connection = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3306/sms_db", "root", "");
-
-            PreparedStatement ps = connection.prepareStatement(
-                    "SELECT student_id, student_number, first_name, last_name " +
-                    "FROM students ORDER BY last_name, first_name");
-            ResultSet rs = ps.executeQuery();
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", "");
+             PreparedStatement ps = connection.prepareStatement("SELECT student_id, student_number, first_name, last_name FROM students ORDER BY last_name, first_name");
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                String num  = rs.getString("student_number");
+                String num = rs.getString("student_number");
                 String name = rs.getString("first_name") + " " + rs.getString("last_name");
                 cmbStudent.addItem(num + " - " + name);
                 studentIds.add(rs.getInt("student_id"));
@@ -140,28 +302,17 @@ public class GradesPanel extends JPanel {
                 studentNames.add(name);
             }
 
-            rs.close(); ps.close(); connection.close();
-
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    private void setupAddButtonListener() {
-        for (ActionListener al : btnAddGrade.getActionListeners()) {
-            btnAddGrade.removeActionListener(al);
-        }
-        btnAddGrade.addActionListener(e -> openAddGradeDialog());
-    }
-
+    // ADD GRADE PANEL
     private void openAddGradeDialog() {
-        if (isOpen) {
-            return;
-        }
         isOpen = true;
 
         JFrame frmAddGrade = new JFrame();
-        frmAddGrade.setSize(712, 645);
+        frmAddGrade.setSize(712, 620);
         frmAddGrade.setLayout(null);
         frmAddGrade.setLocationRelativeTo(null);
         frmAddGrade.setTitle("ADD GRADE");
@@ -199,12 +350,12 @@ public class GradesPanel extends JPanel {
         JLabel lblCourse = new JLabel("Course");
         lblCourse.setForeground(Color.BLACK);
         lblCourse.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblCourse.setBounds(35, 213, 200, 28);
+        lblCourse.setBounds(35, 207, 200, 28);
         frmAddGrade.add(lblCourse);
 
-        String[] optCourse = {"Select course", "English", "Math", "Programming", "Science", "Filipino"};
+        String[] optCourse = {"Select course", "OOP - IT001", "ITP - IT002", "HCI - IT003", "NetAd - IT004", "OS - IT005"};
         JComboBox<String> cmbCourse = new JComboBox<>(optCourse);
-        cmbCourse.setBounds(35, 245, 634, 45);
+        cmbCourse.setBounds(35, 239, 634, 45);
         cmbCourse.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         cmbCourse.setBackground(Color.WHITE);
         frmAddGrade.add(cmbCourse);
@@ -212,23 +363,23 @@ public class GradesPanel extends JPanel {
         JLabel lblGrade = new JLabel("Grade (0-100)");
         lblGrade.setForeground(Color.BLACK);
         lblGrade.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblGrade.setBounds(35, 311, 200, 28);
+        lblGrade.setBounds(35, 299, 200, 28);
         frmAddGrade.add(lblGrade);
 
         JTextField tfGrade = new JTextField();
-        tfGrade.setBounds(35, 343, 300, 45);
+        tfGrade.setBounds(35, 331, 300, 45);
         tfGrade.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddGrade.add(tfGrade);
 
         JLabel lblSemester = new JLabel("Semester");
         lblSemester.setForeground(Color.BLACK);
         lblSemester.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblSemester.setBounds(369, 311, 200, 28);
+        lblSemester.setBounds(369, 299, 200, 28);
         frmAddGrade.add(lblSemester);
 
         String[] optSemester = {"Select", "1st Semester", "2nd Semester", "Summer"};
         JComboBox<String> cmbSemester = new JComboBox<>(optSemester);
-        cmbSemester.setBounds(369, 343, 300, 45);
+        cmbSemester.setBounds(369, 331, 300, 45);
         cmbSemester.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         cmbSemester.setBackground(Color.WHITE);
         frmAddGrade.add(cmbSemester);
@@ -236,16 +387,16 @@ public class GradesPanel extends JPanel {
         JLabel lblRemarks = new JLabel("Remarks (optional)");
         lblRemarks.setForeground(Color.BLACK);
         lblRemarks.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblRemarks.setBounds(35, 411, 200, 28);
+        lblRemarks.setBounds(35, 391, 200, 28);
         frmAddGrade.add(lblRemarks);
 
         JTextField tfRemarks = new JTextField();
-        tfRemarks.setBounds(35, 443, 634, 45);
+        tfRemarks.setBounds(35, 423, 634, 45);
         tfRemarks.setFont(new Font("Segoe UI", Font.PLAIN, 17));
         frmAddGrade.add(tfRemarks);
 
         JButton btnCancel = new JButton("Cancel");
-        btnCancel.setBounds(384, 520, 110, 45);
+        btnCancel.setBounds(384, 490, 110, 45);
         btnCancel.setForeground(Color.decode("#374151"));
         btnCancel.setBackground(new Color(243, 244, 246));
         btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 17));
@@ -255,7 +406,7 @@ public class GradesPanel extends JPanel {
         btnCancel.addActionListener(e -> frmAddGrade.dispose());
 
         JButton btnAdd = new JButton("Add Grade");
-        btnAdd.setBounds(504, 520, 160, 45);
+        btnAdd.setBounds(504, 490, 160, 45);
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBackground(Color.decode("#1f89e5"));
         btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 17));
@@ -264,70 +415,82 @@ public class GradesPanel extends JPanel {
         btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         frmAddGrade.add(btnAdd);
 
-        btnAdd.addActionListener(e -> {
-            int selectedIndex = cmbStudent.getSelectedIndex();
-            String course   = (String) cmbCourse.getSelectedItem();
-            String grade    = tfGrade.getText().trim();
-            String semester = (String) cmbSemester.getSelectedItem();
-            String remarks  = tfRemarks.getText().trim();
+        //ADD GRADE FUNCTION
+        btnAdd.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = cmbStudent.getSelectedIndex();
+                String course = (String) cmbCourse.getSelectedItem();
+                String grade = tfGrade.getText().trim();
+                String semester = (String) cmbSemester.getSelectedItem();
+                String remarks = tfRemarks.getText().trim();
 
-            if (selectedIndex <= 0) {
-                JOptionPane.showMessageDialog(frmAddGrade, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (course.equals("Select course")) {
-                JOptionPane.showMessageDialog(frmAddGrade, "Please select a course.", "Validation", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (grade.isEmpty()) {
-                JOptionPane.showMessageDialog(frmAddGrade, "Please enter a grade.", "Validation", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (semester.equals("Select")) {
-                JOptionPane.showMessageDialog(frmAddGrade, "Please select a semester.", "Validation", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+                if (selectedIndex <= 0) {
+                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a student.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (course.equals("Select course")) {
+                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a course.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (grade.isEmpty()) {
+                    JOptionPane.showMessageDialog(frmAddGrade, "Please enter a grade.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (semester.equals("Select")) {
+                    JOptionPane.showMessageDialog(frmAddGrade, "Please select a semester.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
-            int    studentId     = studentIds.get(selectedIndex);
-            String studentNumber = studentNumbers.get(selectedIndex);  // stored directly
-            String studentName   = studentNames.get(selectedIndex);    // stored directly
+                double gradeNum;
+                try {
+                    gradeNum = Double.parseDouble(grade);
+                    if (gradeNum < 0 || gradeNum > 100) {
+                        JOptionPane.showMessageDialog(frmAddGrade, "Grade must be between 0 and 100.", "Validation", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(frmAddGrade, "Grade must be a valid number.", "Validation", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
-            try {
-                Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/sms_db", "root", "");
+                String equivalent = gradeNum >= 75 ? "Passed" : "Failed";
 
-                // Save student_id, student_number AND student_name so display
-                // never relies on a JOIN — works even after the student is deleted
-                String sql = "INSERT INTO grades " +
-                             "(student_id, student_number, student_name, course_subject, grade, semester, remarks) " +
-                             "VALUES (?, ?, ?, ?, ?, ?, ?)";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setInt(1, studentId);
-                ps.setString(2, studentNumber);
-                ps.setString(3, studentName);
-                ps.setString(4, course);
-                ps.setBigDecimal(5, new java.math.BigDecimal(grade));
-                ps.setString(6, semester);
-                ps.setString(7, remarks);
-                ps.executeUpdate();
+                int studentId = studentIds.get(selectedIndex);
+                String studentNumber = studentNumbers.get(selectedIndex);
+                String studentName = studentNames.get(selectedIndex);
 
-                ps.close(); conn.close();
+                try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/sms_db", "root", ""); PreparedStatement ps = conn.prepareStatement("INSERT INTO grades (student_id, student_number, student_name, course_subject, grade, equivalent, semester, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
 
-                loadGradesFromDB();
-                JOptionPane.showMessageDialog(frmAddGrade,
-                        "Grade added for: " + studentName, "Success", JOptionPane.INFORMATION_MESSAGE);
-                frmAddGrade.dispose();
+                    ps.setInt(1, studentId);
+                    ps.setString(2, studentNumber);
+                    ps.setString(3, studentName);
+                    ps.setString(4, course);
+                    ps.setBigDecimal(5, new java.math.BigDecimal(grade));
+                    ps.setString(6, equivalent);
+                    ps.setString(7, semester);
+                    ps.setString(8, remarks);
+                    ps.executeUpdate();
 
-            } catch (NumberFormatException nfe) {
-                JOptionPane.showMessageDialog(frmAddGrade,
-                        "Grade must be a valid number (e.g. 85 or 92.5).", "Validation", JOptionPane.WARNING_MESSAGE);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(frmAddGrade,
-                        "Error saving grade: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            gradeIds.add(0, generatedKeys.getInt(1));
+                        }
+                    }
+
+                    tableModel.insertRow(0, new Object[]{
+                        studentNumber, studentName, course, grade, equivalent, semester, remarks
+                    });
+
+                    JOptionPane.showMessageDialog(frmAddGrade, "Grade added for: " + studentName, "Success", JOptionPane.INFORMATION_MESSAGE);
+                    frmAddGrade.dispose();
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(frmAddGrade, "Error saving grade: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
-
         frmAddGrade.setVisible(true);
     }
 }
